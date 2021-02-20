@@ -119,9 +119,9 @@ NS_OBJECT_ENSURE_REGISTERED (DeferredRouteOutputTag);
 //-----------------------------------------------------------------------------
 RoutingProtocol::RoutingProtocol () :
   m_rreqRetries (2),
-  m_ttlStart (),
+  m_ttlStart (2),
   m_ttlIncrement (2),
-  m_ttlThreshold (7),
+  m_ttlThreshold (9),
   m_timeoutBuffer (2),
   m_rreqRateLimit (10),
   m_rerrRateLimit (10),
