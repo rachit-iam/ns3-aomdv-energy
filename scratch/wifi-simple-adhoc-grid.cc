@@ -119,11 +119,11 @@ int main (int argc, char *argv[])
   std::string phyMode ("DsssRate1Mbps");
   double distance = 500;  // m
   uint32_t packetSize = 1000; // bytes
-  uint32_t numPackets = 1;
+  uint32_t numPackets = 4;
   uint32_t numNodes = 25;  // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
-  double interval = 0.1; // seconds
+  double interval = 5; // seconds
   bool verbose = false;
   bool tracing = true;
 
@@ -236,7 +236,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance " << distance);
 
   AnimationInterface anim ("animation.xml");
-  Simulator::Stop (Seconds (35.0));
+  Simulator::Stop (Seconds (70.0));
   Simulator::Run ();
   Simulator::Destroy ();
 

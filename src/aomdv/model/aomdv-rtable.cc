@@ -253,6 +253,16 @@ RoutingTableEntry::PathFind (void)
   return path;
 }
 
+struct RoutingTableEntry::Path * 
+RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then load balance
+{
+  Path *path = NULL;
+  //NS_LOG_UNCOND("PATH FIND CHECK" << m_pathList.size());
+  std::vector<Path>::iterator i = m_pathList.begin ();
+  path = &(*i);
+  return path;
+}
+
 struct RoutingTableEntry::Path* 
 RoutingTableEntry::PathFindMinHop (void)
 {

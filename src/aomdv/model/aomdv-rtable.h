@@ -127,6 +127,7 @@ public:
   void PathDeleteLongest (void);          // delete longest path
   bool PathEmpty (void) const;                   // is the path list empty?
   struct Path * PathFind (void);            // find the path that we got first
+  struct Path * PathLoadBalancedFind (void);
   struct Path* PathFindMinHop (void);            // find the shortest path
   uint16_t PathGetMaxHopCount (void);  
   uint16_t PathGetMinHopCount (void);  
