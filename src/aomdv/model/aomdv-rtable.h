@@ -40,6 +40,7 @@
 #include <vector>
 
 #define INFINITY2 0xff
+#define INFINITY3 9999999
 
 namespace ns3 {
 namespace aomdv {
@@ -87,11 +88,12 @@ public:
     /// Output interface address
     Ipv4InterfaceAddress m_iface;
     Time m_ts;         // time when we saw this nexthop
-    // CHANGE
+    // CHANG
     bool m_pathError;
-
+    uint32_t m_MRE;
+    
     Path (Ptr<NetDevice> dev, Ipv4Address dst, Ipv4Address nextHop, uint16_t hopCount, Time expireTime, 
-          Ipv4Address lastHop, Ipv4InterfaceAddress iface);
+          Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE);
 
     Ptr<Ipv4Route> GetRoute () const { return m_ipv4Route; }
     void SetRoute (Ptr<Ipv4Route> r) { m_ipv4Route = r; }
@@ -99,6 +101,8 @@ public:
     Ipv4Address GetNextHop () const { return m_ipv4Route->GetGateway (); }
     void SetLastHop (Ipv4Address lastHop) { m_lastHop = lastHop; }
     Ipv4Address GetLastHop () const { return m_lastHop; }
+    void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+    uint32_t GetMRE () const { return m_MRE; }
     void SetOutputDevice (Ptr<NetDevice> dev) { m_ipv4Route->SetOutputDevice (dev); }
     Ptr<NetDevice> GetOutputDevice () const { return m_ipv4Route->GetOutputDevice (); }
     void SetHopCount (uint16_t hop) { m_hopCount = hop; }
@@ -116,7 +120,7 @@ public:
   /// Path functions - contribution
   void PrintPaths ();
   struct Path* PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
-                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface);
+                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE);
   struct Path* PathLookup (Ipv4Address id);
   struct Path* PathLookupDisjoint (Ipv4Address nh, Ipv4Address lh);
   bool PathNewDisjoint (Ipv4Address nh, Ipv4Address lh);

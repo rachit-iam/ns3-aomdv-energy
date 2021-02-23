@@ -140,9 +140,9 @@ operator<< (std::ostream & os, TypeHeader const & h)
 // RREQ
 //-----------------------------------------------------------------------------
 RreqHeader::RreqHeader (uint8_t flags, uint8_t reserved, uint8_t hopCount, uint32_t requestID, Ipv4Address dst,
-                        uint32_t dstSeqNo, Ipv4Address origin, uint32_t originSeqNo, Ipv4Address firstHop) :
+                        uint32_t dstSeqNo, Ipv4Address origin, uint32_t originSeqNo, Ipv4Address firstHop, uint32_t MRE) :
   m_flags (flags), m_reserved (reserved), m_hopCount (hopCount), m_requestID (requestID), m_dst (dst),
-  m_dstSeqNo (dstSeqNo), m_origin (origin),  m_originSeqNo (originSeqNo), m_firstHop (firstHop)
+  m_dstSeqNo (dstSeqNo), m_origin (origin),  m_originSeqNo (originSeqNo), m_firstHop (firstHop), m_MRE(MRE)
 {
 }
 
@@ -167,7 +167,7 @@ RreqHeader::GetInstanceTypeId () const
 uint32_t
 RreqHeader::GetSerializedSize () const
 {
-  return 27;                            //Read the source code
+  return 31;                            //Read the source code
 }
 
 void
@@ -182,6 +182,7 @@ RreqHeader::Serialize (Buffer::Iterator i) const
   WriteTo (i, m_origin);
   i.WriteHtonU32 (m_originSeqNo);
   WriteTo (i, m_firstHop);
+  i.WriteHtonU32 (m_MRE);
 }
 
 uint32_t
@@ -197,6 +198,7 @@ RreqHeader::Deserialize (Buffer::Iterator start)
   ReadFrom (i, m_origin);
   m_originSeqNo = i.ReadNtohU32 ();
   ReadFrom (i, m_firstHop);
+  m_MRE = i.ReadNtohU32 ();
 
   uint32_t dist = i.GetDistanceFrom (start);
   NS_ASSERT (dist == GetSerializedSize ());
@@ -211,7 +213,8 @@ RreqHeader::Print (std::ostream &os) const
      << m_origin << " sequence number " << m_originSeqNo << " first hop " << m_firstHop
      << " flags:" << " Gratuitous RREP " << (*this).GetGratiousRrep ()
      << " Destination only " << (*this).GetDestinationOnly ()
-     << " Unknown sequence number " << (*this).GetUnknownSeqno ();
+     << " Unknown sequence number " << (*this).GetUnknownSeqno ()
+     << " Minimum Energy = " << m_MRE;
 }
 
 std::ostream &
@@ -272,7 +275,7 @@ RreqHeader::operator== (RreqHeader const & o) const
   return (m_flags == o.m_flags && m_reserved == o.m_reserved &&
           m_hopCount == o.m_hopCount && m_requestID == o.m_requestID &&
           m_dst == o.m_dst && m_dstSeqNo == o.m_dstSeqNo &&
-          m_origin == o.m_origin && m_originSeqNo == o.m_originSeqNo && m_firstHop == o.m_firstHop);
+          m_origin == o.m_origin && m_originSeqNo == o.m_originSeqNo && m_firstHop == o.m_firstHop && m_MRE == o.m_MRE);
 }
 
 //-----------------------------------------------------------------------------
@@ -280,9 +283,9 @@ RreqHeader::operator== (RreqHeader const & o) const
 //-----------------------------------------------------------------------------
 
 RrepHeader::RrepHeader (uint8_t prefixSize, uint8_t hopCount, Ipv4Address dst,
-                        uint32_t dstSeqNo, Ipv4Address origin, uint32_t requestID, Ipv4Address firstHop, Time lifeTime) :
+                        uint32_t dstSeqNo, Ipv4Address origin, uint32_t requestID, Ipv4Address firstHop, Time lifeTime, uint32_t MRE) :
   m_flags (0), m_prefixSize (prefixSize), m_hopCount (hopCount),
-  m_dst (dst), m_dstSeqNo (dstSeqNo), m_origin (origin), m_requestID (requestID), m_firstHop (firstHop)
+  m_dst (dst), m_dstSeqNo (dstSeqNo), m_origin (origin), m_requestID (requestID), m_firstHop (firstHop), m_MRE (MRE)
 {
   m_lifeTime = uint32_t (lifeTime.GetMilliSeconds ());
 }
@@ -308,7 +311,7 @@ RrepHeader::GetInstanceTypeId () const
 uint32_t
 RrepHeader::GetSerializedSize () const
 {
-  return 27;
+  return 31;
 }
 
 void
@@ -323,6 +326,7 @@ RrepHeader::Serialize (Buffer::Iterator i) const
   i.WriteHtonU32 (m_requestID);
   WriteTo (i, m_firstHop);
   i.WriteHtonU32 (m_lifeTime);
+  i.WriteHtonU32 (m_MRE);
 }
 
 uint32_t
@@ -339,6 +343,7 @@ RrepHeader::Deserialize (Buffer::Iterator start)
   m_requestID = i.ReadNtohU32 ();
   ReadFrom (i, m_firstHop);
   m_lifeTime = i.ReadNtohU32 ();
+  m_MRE = i.ReadNtohU32 ();
 
   uint32_t dist = i.GetDistanceFrom (start);
   NS_ASSERT (dist == GetSerializedSize ());
@@ -354,7 +359,8 @@ RrepHeader::Print (std::ostream &os) const
       os << " prefix size " << m_prefixSize;
     }
   os << " source ipv4 " << m_origin << " lifetime " << m_lifeTime
-     << " acknowledgment required flag " << (*this).GetAckRequired ();
+     << " acknowledgment required flag " << (*this).GetAckRequired ()
+     << " Minimum Energy = " << m_MRE;
 }
 
 void
@@ -402,7 +408,7 @@ RrepHeader::operator== (RrepHeader const & o) const
 {
   return (m_flags == o.m_flags && m_prefixSize == o.m_prefixSize &&
           m_hopCount == o.m_hopCount && m_dst == o.m_dst && m_dstSeqNo == o.m_dstSeqNo &&
-          m_origin == o.m_origin && m_requestID == o.m_requestID && m_firstHop == o.m_firstHop && m_lifeTime == o.m_lifeTime);
+          m_origin == o.m_origin && m_requestID == o.m_requestID && m_firstHop == o.m_firstHop && m_lifeTime == o.m_lifeTime && m_MRE == o.m_MRE);
 }
 
 void

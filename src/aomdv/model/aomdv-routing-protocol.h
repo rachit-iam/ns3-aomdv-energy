@@ -214,6 +214,8 @@ private:
   void UpdateRouteToNeighbor (Ipv4Address sender, Ipv4Address receiver);
   /// Check that packet is send from own interface
   bool IsMyOwnAddress (Ipv4Address src);
+  /// GET remaining energy
+  uint32_t GetRemainingEnergy(void) ;
   /// Find unicast socket with local interface address iface
   Ptr<Socket> FindSocketWithInterfaceAddress (Ipv4InterfaceAddress iface) const;
   /// Find subnet directed broadcast socket with local interface address iface

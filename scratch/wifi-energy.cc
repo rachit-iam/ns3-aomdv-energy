@@ -256,7 +256,7 @@ main (int argc, char *argv[])
   // Give OLSR time to converge-- 30 seconds perhaps
   Simulator::Schedule (Seconds (30.0), &GenerateTraffic, source, packetSize, numPackets,
                        interPacketInterval);
-  Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
+  //Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
   // Output what we are doing
   NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance "
                                       << distance);

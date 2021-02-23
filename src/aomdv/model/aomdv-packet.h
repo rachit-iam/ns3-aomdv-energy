@@ -35,6 +35,8 @@
 #include <map>
 #include "ns3/nstime.h"
 
+#define INFINITY3 9999999
+
 namespace ns3 {
 namespace aomdv {
 
@@ -106,7 +108,7 @@ public:
   RreqHeader (uint8_t flags = 0, uint8_t reserved = 0, uint8_t hopCount = 0,
               uint32_t requestID = 0, Ipv4Address dst = Ipv4Address (),
               uint32_t dstSeqNo = 0, Ipv4Address origin = Ipv4Address (),
-              uint32_t originSeqNo = 0, Ipv4Address firstHop = Ipv4Address());
+              uint32_t originSeqNo = 0, Ipv4Address firstHop = Ipv4Address(), uint32_t MRE = INFINITY3);
 
   ///\name Header serialization/deserialization
   //\{
@@ -134,6 +136,8 @@ public:
   uint32_t GetOriginSeqno () const { return m_originSeqNo; }
   void SetFirstHop (Ipv4Address a) { m_firstHop = a; }
   Ipv4Address GetFirstHop () const { return m_firstHop; }
+  void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+  uint32_t GetMRE () const { return m_MRE; }
   //\}
 
   ///\name Flags
@@ -157,6 +161,7 @@ private:
   Ipv4Address    m_origin;         ///< Originator IP Address
   uint32_t       m_originSeqNo;    ///< Source Sequence Number
   Ipv4Address    m_firstHop;
+  uint32_t       m_MRE;
 };
 
 std::ostream & operator<< (std::ostream & os, RreqHeader const &);
@@ -187,7 +192,7 @@ public:
   RrepHeader (uint8_t prefixSize = 0, uint8_t hopCount = 0, Ipv4Address dst =
                 Ipv4Address (), uint32_t dstSeqNo = 0, Ipv4Address origin =
                 Ipv4Address (), uint32_t requestID = 0,  Ipv4Address firstHop =
-                Ipv4Address (), Time lifetime = MilliSeconds (0));
+                Ipv4Address (), Time lifetime = MilliSeconds (0), uint32_t MRE = INFINITY3);
   ///\name Header serialization/deserialization
   //\{
   static TypeId GetTypeId ();
@@ -214,6 +219,8 @@ public:
   Ipv4Address GetFirstHop () const { return m_firstHop; }
   void SetLifeTime (Time t);
   Time GetLifeTime () const;
+  void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+  uint32_t GetMRE () const { return m_MRE; }
   //\}
 
   ///\name Flags
@@ -238,6 +245,7 @@ private:
   uint32_t      m_requestID;
   Ipv4Address   m_firstHop;
   uint32_t      m_lifeTime;         ///< Lifetime (in milliseconds)
+  uint32_t      m_MRE;
 };
 
 std::ostream & operator<< (std::ostream & os, RrepHeader const &);
