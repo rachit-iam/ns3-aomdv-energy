@@ -44,6 +44,7 @@
 #include "ns3/udp-socket-factory.h"
 #include "ns3/udp-l4-protocol.h"
 #include "ns3/udp-header.h"
+#include "ns3/energy-module.h"
 
 namespace ns3
 {
@@ -550,7 +551,8 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
     }
 
   // Forwarding
-  
+  //energy example
+  //NS_LOG_UNCOND("Node " << m_ipv4->GetObject<Node> ()->GetId () << "has energy remaining = " << m_ipv4->GetObject<Node> ()->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
   //NS_LOG_UNCOND("check route input packet id = " << p->GetUid() << "current node = " << m_ipv4->GetAddress (1, 0).GetLocal ()<< "at " << Simulator::Now().GetSeconds());
   return Forwarding (p, header, ucb, ecb);
 }

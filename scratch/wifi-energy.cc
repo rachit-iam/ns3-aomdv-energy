@@ -85,12 +85,15 @@
 #include "ns3/ipv4-list-routing-helper.h"
 #include "ns3/internet-stack-helper.h"
 #include "ns3/netanim-module.h"
+#include "ns3/energy-module.h"
+#include "ns3/wifi-radio-energy-model-helper.h"
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("WifiSimpleAdhocGrid");
 
-void ReceivePacket (Ptr<Socket> socket)
+void
+ReceivePacket (Ptr<Socket> socket)
 {
   while (socket->Recv ())
     {
@@ -98,14 +101,14 @@ void ReceivePacket (Ptr<Socket> socket)
     }
 }
 
-static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
-                             uint32_t pktCount, Time pktInterval )
+static void
+GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize, uint32_t pktCount, Time pktInterval)
 {
   if (pktCount > 0)
     {
       socket->Send (Create<Packet> (pktSize));
-      Simulator::Schedule (pktInterval, &GenerateTraffic,
-                           socket, pktSize,pktCount - 1, pktInterval);
+      Simulator::Schedule (pktInterval, &GenerateTraffic, socket, pktSize, pktCount - 1,
+                           pktInterval);
     }
   else
     {
@@ -113,14 +116,24 @@ static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
     }
 }
 
+void 
+EnergyCheck(NodeContainer c) {
+    NS_LOG_UNCOND("Time = " << Simulator::Now());
+    for(NodeContainer::Iterator i = c.Begin() ; i < c.End() ; i++){
+        NS_LOG_UNCOND((*i)->GetId() << " energy = " << (*i)->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
+    }
+    NS_LOG_UNCOND("\n");
+    Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
+}
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   std::string phyMode ("DsssRate1Mbps");
-  double distance = 500;  // m
+  double distance = 500; // m
   uint32_t packetSize = 1000; // bytes
   uint32_t numPackets = 5;
-  uint32_t numNodes = 25;  // by default, 5x5
+  uint32_t numNodes = 25; // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
   double interval = 1; // seconds
@@ -143,8 +156,7 @@ int main (int argc, char *argv[])
   Time interPacketInterval = Seconds (interval);
 
   // Fix non-unicast data rate to be the same as that of unicast
-  Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode",
-                      StringValue (phyMode));
+  Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue (phyMode));
 
   NodeContainer c;
   c.Create (numNodes);
@@ -153,12 +165,12 @@ int main (int argc, char *argv[])
   WifiHelper wifi;
   if (verbose)
     {
-      wifi.EnableLogComponents ();  // Turn on all Wifi logging
+      wifi.EnableLogComponents (); // Turn on all Wifi logging
     }
 
-  YansWifiPhyHelper wifiPhy =  YansWifiPhyHelper::Default ();
+  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   // set it to zero; otherwise, gain will be added
-  wifiPhy.Set ("RxGain", DoubleValue (-10) );
+  wifiPhy.Set ("RxGain", DoubleValue (-10));
   // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
   wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
 
@@ -170,20 +182,16 @@ int main (int argc, char *argv[])
   // Add an upper mac and disable rate control
   WifiMacHelper wifiMac;
   wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                "DataMode",StringValue (phyMode),
-                                "ControlMode",StringValue (phyMode));
+  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", "DataMode", StringValue (phyMode),
+                                "ControlMode", StringValue (phyMode));
   // Set it to adhoc mode
   wifiMac.SetType ("ns3::AdhocWifiMac");
   NetDeviceContainer devices = wifi.Install (wifiPhy, wifiMac, c);
 
   MobilityHelper mobility;
-  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
-                                 "MinX", DoubleValue (0.0),
-                                 "MinY", DoubleValue (0.0),
-                                 "DeltaX", DoubleValue (distance),
-                                 "DeltaY", DoubleValue (distance),
-                                 "GridWidth", UintegerValue (5),
+  mobility.SetPositionAllocator ("ns3::GridPositionAllocator", "MinX", DoubleValue (0.0), "MinY",
+                                 DoubleValue (0.0), "DeltaX", DoubleValue (distance), "DeltaY",
+                                 DoubleValue (distance), "GridWidth", UintegerValue (5),
                                  "LayoutType", StringValue ("RowFirst"));
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (c);
@@ -192,6 +200,21 @@ int main (int argc, char *argv[])
   AomdvHelper aomdv;
   Ipv4StaticRoutingHelper staticRouting;
 
+  /** Energy Model **/
+  /***************************************************************************/
+  /* energy source */
+  BasicEnergySourceHelper basicSourceHelper;
+  // configure energy source
+  basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (200));
+  // install source
+  EnergySourceContainer sources = basicSourceHelper.Install (c);
+  /* device energy model */
+  WifiRadioEnergyModelHelper radioEnergyHelper;
+  // configure radio energy model
+  radioEnergyHelper.Set ("TxCurrentA", DoubleValue (0.0174));
+  // install device model
+  DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (devices, sources);
+  /***************************************************************************/
   Ipv4ListRoutingHelper list;
   list.Add (aomdv, 10);
 
@@ -220,20 +243,23 @@ int main (int argc, char *argv[])
       wifiPhy.EnableAsciiAll (ascii.CreateFileStream ("wifi-simple-adhoc-grid.tr"));
       wifiPhy.EnablePcap ("wifi-simple-adhoc-grid", devices);
       // Trace routing tables
-      Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.routes", std::ios::out);
+      Ptr<OutputStreamWrapper> routingStream =
+          Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.routes", std::ios::out);
       aomdv.PrintRoutingTableAllEvery (Seconds (2), routingStream);
-      Ptr<OutputStreamWrapper> neighborStream = Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.neighbors", std::ios::out);
+      Ptr<OutputStreamWrapper> neighborStream =
+          Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.neighbors", std::ios::out);
       aomdv.PrintNeighborCacheAllEvery (Seconds (2), neighborStream);
 
       // To do-- enable an IP-level trace that shows forwarding events only
     }
 
   // Give OLSR time to converge-- 30 seconds perhaps
-  Simulator::Schedule (Seconds (30.0), &GenerateTraffic,
-                       source, packetSize, numPackets, interPacketInterval);
-
+  Simulator::Schedule (Seconds (30.0), &GenerateTraffic, source, packetSize, numPackets,
+                       interPacketInterval);
+  Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
   // Output what we are doing
-  NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance " << distance);
+  NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance "
+                                      << distance);
 
   AnimationInterface anim ("animation.xml");
   Simulator::Stop (Seconds (70.0));
@@ -242,4 +268,3 @@ int main (int argc, char *argv[])
 
   return 0;
 }
-
