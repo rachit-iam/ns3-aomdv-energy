@@ -340,6 +340,7 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
                               Ptr<NetDevice> oif, Socket::SocketErrno &sockerr)
 {
   //NS_LOG_UNCOND (this << header << (oif ? oif->GetIfIndex () : 0));
+  //dev-rachit
   if (!p)
     {
       NS_LOG_DEBUG("Packet is == 0");
