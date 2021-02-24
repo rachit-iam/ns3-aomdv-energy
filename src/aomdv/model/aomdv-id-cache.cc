@@ -92,13 +92,12 @@ IdCache::UniqueId::ReversePathInsert (Ipv4Address nextHop, Ipv4Address lastHop)
 }
 
 bool 
-IdCache::UniqueId::ReversePathLookup (Ipv4Address nextHop, AOMDVRoute & rt, Ipv4Address lastHop)
+IdCache::UniqueId::ReversePathLookup (Ipv4Address nextHop, Ipv4Address lastHop)
 {
   for (std::vector<AOMDVRoute>::iterator i = m_reversePathList.begin(); i != m_reversePathList.end(); ++i) 
     {
       if ( ( i->GetNextHop () == nextHop) && ( i->GetLastHop () == lastHop) )
         {
-	  rt = *i;
           return true;     
         }
     }
@@ -113,13 +112,12 @@ IdCache::UniqueId::ForwardPathInsert (Ipv4Address nextHop, Ipv4Address lastHop)
 }
 
 bool
-IdCache::UniqueId::ForwardPathLookup (Ipv4Address nextHop, AOMDVRoute & rt, Ipv4Address lastHop)
+IdCache::UniqueId::ForwardPathLookup (Ipv4Address nextHop, Ipv4Address lastHop)
 {
   for (std::vector<AOMDVRoute>::iterator i = m_forwardPathList.begin(); i != m_forwardPathList.end(); ++i) 
     {
       if ( ( i->GetNextHop () == nextHop) && ( i->GetLastHop () == lastHop) )
         {
-	  rt = *i;
           return true;      
         }
     }

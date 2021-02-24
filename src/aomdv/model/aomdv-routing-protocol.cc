@@ -1504,37 +1504,40 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
                     }
                   #endif
                   #ifdef AOMDV_LINK_DISJOINT_PATHS
-                  RoutingTableEntry::Path *forwardPath = NULL;
-                  RoutingTableEntry::Path *firstPath = toDst.PathFind (); // Get first path for RREQ destination
+                  Ipv4Address forNextHop = Ipv4Address::GetAny(), forLastHop = Ipv4Address::GetAny();
+                  Time forExpire;
+                  //RoutingTableEntry::Path *firstPath = toDst.PathFind (); // Get first path for RREQ destination
 			/* Make sure we don't answer with the same forward path twice in response 
 				to a certain RREQ (received more than once). E.g. "middle node" 
 				in "double diamond". */
-                  std::vector<Path> paths;
+                  std::vector<RoutingTableEntry::Path> paths;
                   toDst.GetPaths (paths);
-                  AOMDVRoute rt;
-                  for (std::vector<Path>::const_iterator i = paths.begin (); i!= paths.end (); ++i)
+                  //AOMDVRoute rt;
+                  for (std::vector<RoutingTableEntry::Path>::const_iterator i = paths.begin (); i!= paths.end (); ++i)
                     {
-                      if (!(b->ForwardPathLookup (i->m_nextHop, & rt, i->m_lastHop)))
+                      if (!(b->ForwardPathLookup (i->GetNextHop (), i->GetLastHop ())))
                         {
-                          forwardPath = i;
+                          forNextHop = i->GetNextHop ();
+                          forLastHop = i->GetLastHop ();
+                          forExpire = i->GetExpire ();
                           break;
                         }
                     }
                   /* If an unused forward path is found and we have not answered
 				along this reverse path (for this RREQ) - send a RREP back. */
-                  if (forwardPath && !(b->ReversePathLookup (reversePath->m_nextHop, & rt, reversePath->m_lastHop)))
+                  if ((forNextHop != Ipv4Address::GetAny()) && !(b->ReversePathLookup (reversePath->GetNextHop (), reversePath->GetLastHop ())))
                     {
                       /* Mark the reverse and forward path as used (for this RREQ). */
 				// Cache the broadcast ID
-                      b->ReversePathInsert (reversePath->m_nextHop,reversePath->m_lastHop);
-                      b->ForwardPathInsert (forwardPath->m_nextHop, forwardPath->m_lastHop);
+                      b->ReversePathInsert (reversePath->GetNextHop(),reversePath->GetLastHop());
+                      b->ForwardPathInsert (forNextHop, forLastHop);
                       if (toDst.GetAdvertisedHopCount () == INFINITY2)
                         {
                           toDst.SetAdvertisedHopCount (toDst.PathGetMaxHopCount ());
                         }
                       toDst.SetError (true);
-                      SendReplyByIntermediateNode (toDst, toOrigin, rreqHeader.GetGratiousRrep (), forwardPath->GetExpire (), 
-                                                   forwardPath->GetLastHop (), rreqHeader.GetId ());
+                      SendReplyByIntermediateNode (toDst, toOrigin, rreqHeader.GetGratiousRrep (), forExpire , 
+                                                   forLastHop , rreqHeader.GetId ());
                       return;
 		    }
                   #endif // AOMDV_LINK_DISJOINT_PATHS
@@ -1716,7 +1719,7 @@ void
 RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sender)
 {
   NS_LOG_FUNCTION (this << " src " << sender);
-  //NS_LOG_UNCOND("START RECVREPLY" << receiver);
+  NS_LOG_UNCOND("START RECVREPLY at " << receiver);
   RrepHeader rrepHeader;
   p->RemoveHeader (rrepHeader);
   IdCache::UniqueId* b = NULL;
@@ -1727,6 +1730,11 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     {
 
       return;
+    }
+  if (rrepHeader.GetHopCount () == 0) 
+    {
+      rrepHeader.SetFirstHop (receiver);
+      //rq->rq_first_hop = index;
     }
 
   uint8_t hop = rrepHeader.GetHopCount () + 1;
@@ -1818,7 +1826,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
                 forwardPath->SetMRE(rrepHeader.GetMRE ());
               }
           }
-        else if ((toDst.PathNewDisjoint (rrepHeader.GetOrigin (),rrepHeader.GetFirstHop ()))
+        else if ((toDst.PathNewDisjoint (sender ,rrepHeader.GetFirstHop ()))//change imp
                   && (toDst.GetNumberofPaths () < AOMDV_MAX_PATHS) 
                   && (hop - toDst.PathGetMinHopCount () <= AOMDV_PRIM_ALT_PATH_LENGTH_DIFF))
           {
@@ -1870,6 +1878,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   RoutingTableEntry toOrigin;
   uint32_t id = rrepHeader.GetRequestID ();
   b = m_rreqIdCache.GetId (rrepHeader.GetOrigin(), id);///CHANGED FROM DST TO ORIGIN
+  NS_LOG_UNCOND("Check middle of recv reply");
   #ifdef AOMDV_NODE_DISJOINT_PATHS
   if (!m_routingTable.LookupRoute (rrepHeader.GetOrigin (), toOrigin) || (toOrigin.GetFlag () != VALID)
       || (b == NULL) || (b->count))
@@ -1908,42 +1917,48 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   /* Make sure we don't answer along the same path twice in response 
       to a certain RREQ. Try to find an unused (reverse) path to forward the RREP. */
   RoutingTableEntry::Path* reversePath = NULL;
-  RoutingTableEntry::Path *firstPath = toDst.PathFind (); // Get first path for RREQ destination
+  Ipv4Address revNextHop =Ipv4Address::GetAny(), revLastHop = Ipv4Address::GetAny();
+  //RoutingTableEntry::Path *firstPath = toDst.PathFind (); // Get first path for RREQ destination
   /* Make sure we don't answer with the same forward path twice in response 
   to a certain RREQ (received more than once). E.g. "middle node" in "double diamond". */
-  std::vector<Path> paths;
-  toDst.GetPaths (paths);
-  AOMDVRoute rt;
-  for (std::vector<Path>::const_iterator i = paths.begin (); i!= paths.end (); ++i)
+  std::vector<RoutingTableEntry::Path> paths;
+  toOrigin.GetPaths (paths);//change from todst
+  for (std::vector<RoutingTableEntry::Path>::const_iterator i = paths.begin (); i!= paths.end (); ++i)
     {
-      if (!(b->ReversePathLookup (i->GetNextHop (), & rt, i->GetLastHop ())))
+      if (!(b->ReversePathLookup (i->GetNextHop (), i->GetLastHop ())))
         {
-          reversePath = i;
+          revNextHop = i->GetNextHop();
+          revLastHop = i->GetLastHop();
           break;
         }
     }
 
   /* If an unused reverse path is found and the forward path (for 
      this RREP) has not already been replied - forward the RREP. */
-  if (reversePath && b->ForwardPathLookup (forwardPath->GetNextHop (), &rt, forwardPath->GetLastHop () == NULL)
+  if ((revNextHop != Ipv4Address::GetAny()) && !(b->ForwardPathLookup (forwardPath->GetNextHop (),  (forwardPath->GetLastHop ()))))
     {
       if(forwardPath->GetNextHop () == rrepHeader.GetOrigin () && forwardPath->GetLastHop () == rrepHeader.GetFirstHop ())
         {
-          b->ReversePathInsert (reversePath->GetNextHop (), reversePath->GetLastHop ());
+          b->ReversePathInsert (revNextHop , revLastHop );
           b->ForwardPathInsert (forwardPath->GetNextHop (), forwardPath->GetLastHop ());
           // route advertisement
           if (toDst.GetAdvertisedHopCount () == INFINITY2)
             {
               toDst.SetAdvertisedHopCount (toDst.PathGetMaxHopCount ());
             }
-          rrepHeader.SetHopCount (toDst.GetAdvertisedHopCount);
+          rrepHeader.SetHopCount (hop);
+          rrepHeader.SetMRE( std::min(rrepHeader.GetMRE(), GetRemainingEnergy()));//todo make advertised for energy also
           reversePath->SetExpire (Simulator::Now() + m_activeRouteTimeout);  
           // CHANGE
           toDst.SetError (true);
-	}
+	      }
     }
   else
     {
+      NS_LOG_UNCOND("FORWARD PATH NEXT HOP = " << forwardPath->GetNextHop() << " last hop = " << forwardPath->GetLastHop());
+      NS_LOG_UNCOND("reverse PATH NEXT HOP = " << revNextHop << " last hop = " << revLastHop);
+      NS_LOG_UNCOND("RREP ORIGIN = " << rrepHeader.GetOrigin () << " FIRST HOP = " << rrepHeader.GetFirstHop ());
+      NS_LOG_UNCOND("ERROR GOING IN ELSE STATEMENT");
       return;
     }
   //NS_LOG_UNCOND("JUST IN CASE");

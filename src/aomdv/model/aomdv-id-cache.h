@@ -44,7 +44,7 @@ namespace aomdv
 class AOMDVRoute 
 {
 public:
-  AOMDVRoute(Ipv4Address nextHop, Ipv4Address lastHop = 0) : m_nextHop (nextHop) , m_lastHop (lastHop) {}
+  AOMDVRoute(Ipv4Address nextHop = 0, Ipv4Address lastHop = 0) : m_nextHop (nextHop) , m_lastHop (lastHop) {}
   void SetNextHop (Ipv4Address nextHop) { m_nextHop = nextHop; }
   Ipv4Address GetNextHop () const { return m_nextHop; }
   void SetLastHop (Ipv4Address lastHop) { m_lastHop = lastHop; }
@@ -77,9 +77,9 @@ public:
     std::vector<AOMDVRoute> m_reversePathList;     // List of reverse paths used for forwarding replies
     std::vector<AOMDVRoute> m_forwardPathList;     // List of forward paths advertised already
     void ReversePathInsert (Ipv4Address nextHop, Ipv4Address lastHop = 0);
-    bool ReversePathLookup (Ipv4Address nextHop, AOMDVRoute & rt, Ipv4Address lastHop = 0);
+    bool ReversePathLookup (Ipv4Address nextHop, Ipv4Address lastHop = 0);
     void ForwardPathInsert (Ipv4Address nextHop, Ipv4Address lastHop = 0);
-    bool ForwardPathLookup (Ipv4Address nextHop, AOMDVRoute & rt, Ipv4Address lastHop = 0);
+    bool ForwardPathLookup (Ipv4Address nextHop, Ipv4Address lastHop = 0);
   };
 
   void InsertId (Ipv4Address addr, uint32_t id);
