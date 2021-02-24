@@ -102,11 +102,10 @@ struct RoutingTableEntry::Path*
 RoutingTableEntry::PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
                                Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE)
 {
-  Path path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface, MRE);
-  m_pathList.push_back (path);
+  Path *p = new Path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface, MRE);
+  m_pathList.push_back (*p);
   m_numPaths += 1;     //TODO
   //RoutingTableEntry::Path *p = (struct RoutingTableEntry::Path*)malloc(sizeof(struct RoutingTableEntry::Path));
-  Path *p = &path;
   return p;
 }
 

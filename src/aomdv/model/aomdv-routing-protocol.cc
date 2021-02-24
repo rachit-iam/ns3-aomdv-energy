@@ -1769,10 +1769,6 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     {
     // The forward route for this destination is created if it does not already exist.
       NS_LOG_LOGIC ("add new route");
-      forwardPath = newEntry.PathInsert (dev, sender, hop, 
-                           Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime)), 
-                           rrepHeader.GetFirstHop (), 
-                           m_ipv4->GetAddress (m_ipv4->GetInterfaceForAddress (receiver), 0), rrepHeader.GetMRE());
       m_routingTable.AddRoute (newEntry);
       m_routingTable.LookupRoute(dst, toDst);
     }
@@ -1793,17 +1789,20 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     // (ii)the Destination Sequence Number in the RREP is greater than the node's copy of the destination sequence number
     // and the known value is valid,
     //NS_LOG_UNCOND("number of paths before= " << toDst.GetNumberofPaths() );
+    //TODO WHY NS_LOG_UNCOND()
     if ( (int32_t (rrepHeader.GetDstSeqno ()) - int32_t (toDst.GetSeqNo ())) > 0)
       {//TODO GETNUMBER OF PATHS = 0 DOESNT MEAN WE CAN ADD THIS
         toDst.SetSeqNo (rrepHeader.GetDstSeqno ());
         toDst.SetAdvertisedHopCount (INFINITY2);
         toDst.PathAllDelete ();
         toDst.SetFlag (VALID);
-        /* Insert forward path to RREQ destination. */
+        /* Insert forward path to RREQ destination. */NS_LOG_UNCOND(toDst.GetNumberofPaths());
         forwardPath = toDst.PathInsert (dev, sender, hop, 
                                         Simulator::Now() + rrepHeader.GetLifeTime (), rrepHeader.GetFirstHop (),
                                         m_ipv4->GetAddress (m_ipv4->GetInterfaceForAddress (receiver), 0), rrepHeader.GetMRE ());
   // CHANGE
+        NS_LOG_UNCOND(toDst.GetNumberofPaths());
+        NS_LOG_UNCOND("ath insert next hop = " << forwardPath->GetNextHop() << "last hop = " << forwardPath->GetLastHop());
         toDst.SetLastHopCount (toDst.PathGetMaxHopCount ());
         
       }
@@ -1916,7 +1915,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     }
   /* Make sure we don't answer along the same path twice in response 
       to a certain RREQ. Try to find an unused (reverse) path to forward the RREP. */
-  RoutingTableEntry::Path* reversePath = NULL;
+  //RoutingTableEntry::Path* reversePath = NULL;
   Ipv4Address revNextHop =Ipv4Address::GetAny(), revLastHop = Ipv4Address::GetAny();
   //RoutingTableEntry::Path *firstPath = toDst.PathFind (); // Get first path for RREQ destination
   /* Make sure we don't answer with the same forward path twice in response 
@@ -1937,7 +1936,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
      this RREP) has not already been replied - forward the RREP. */
   if ((revNextHop != Ipv4Address::GetAny()) && !(b->ForwardPathLookup (forwardPath->GetNextHop (),  (forwardPath->GetLastHop ()))))
     {
-      if(forwardPath->GetNextHop () == rrepHeader.GetOrigin () && forwardPath->GetLastHop () == rrepHeader.GetFirstHop ())
+      if(forwardPath->GetNextHop () == sender && forwardPath->GetLastHop () == rrepHeader.GetFirstHop ())
         {
           b->ReversePathInsert (revNextHop , revLastHop );
           b->ForwardPathInsert (forwardPath->GetNextHop (), forwardPath->GetLastHop ());
@@ -1946,9 +1945,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
             {
               toDst.SetAdvertisedHopCount (toDst.PathGetMaxHopCount ());
             }
+          NS_LOG_UNCOND("CHECK DEEP HOP COUNT = " << (int)hop);
           rrepHeader.SetHopCount (hop);
           rrepHeader.SetMRE( std::min(rrepHeader.GetMRE(), GetRemainingEnergy()));//todo make advertised for energy also
-          reversePath->SetExpire (Simulator::Now() + m_activeRouteTimeout);  
+          //reversePath->SetExpire (Simulator::Now() + m_activeRouteTimeout);  
           // CHANGE
           toDst.SetError (true);
 	      }
@@ -1961,6 +1961,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
       NS_LOG_UNCOND("ERROR GOING IN ELSE STATEMENT");
       return;
     }
+      NS_LOG_UNCOND("FORWARD PATH NEXT HOP = " << forwardPath->GetNextHop() << " last hop = " << forwardPath->GetLastHop());
+      NS_LOG_UNCOND("reverse PATH NEXT HOP = " << revNextHop << " last hop = " << revLastHop);
+      NS_LOG_UNCOND("RREP ORIGIN = " << sender << " FIRST HOP = " << rrepHeader.GetFirstHop ());
+      NS_LOG_UNCOND("\n");
   //NS_LOG_UNCOND("JUST IN CASE");
   #endif // AOMDV_LINK_DISJOINT_PATHS
   NS_LOG_UNCOND("SENDING RREP FROM " << receiver << " to " << toOrigin.PathFind ()->GetNextHop() << " ,id = "<< 
