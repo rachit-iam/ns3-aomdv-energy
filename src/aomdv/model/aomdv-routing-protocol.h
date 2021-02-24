@@ -216,6 +216,8 @@ private:
   bool IsMyOwnAddress (Ipv4Address src);
   /// GET remaining energy
   uint32_t GetRemainingEnergy(void) ;
+  ///Get node position
+  std::pair<uint32_t, uint32_t> GetPosition(void) ; 
   /// Find unicast socket with local interface address iface
   Ptr<Socket> FindSocketWithInterfaceAddress (Ipv4InterfaceAddress iface) const;
   /// Find subnet directed broadcast socket with local interface address iface
