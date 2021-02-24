@@ -1438,7 +1438,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
   if (IsMyOwnAddress (rreqHeader.GetDst ()))
     {
       m_routingTable.LookupRoute (origin, toOrigin);
-      //NS_LOG_UNCOND ("Send reply since I am the destination" << src << " " << toOrigin.GetNumberofPaths());
+      NS_LOG_UNCOND ("Send reply since I am the destination" << src << " " << toOrigin.GetNumberofPaths());
       // NS_LOG_UNCOND ("LAST HOP - " << src << " firstHop = " << rreqHeader.GetFirstHop ());
       //NS_LOG_UNCOND ("NEXT HOP IN current PATH = " << toOrigin.PathFind()->GetNextHop());
       //NS_LOG_UNCOND ("rreq id = " << rreqHeader.GetId());
@@ -1772,12 +1772,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
       m_routingTable.AddRoute (newEntry);
       m_routingTable.LookupRoute(dst, toDst);
     }
-    if (IsMyOwnAddress (rrepHeader.GetOrigin ()))
-    {
-      NS_LOG_UNCOND("CHECK ABOVE ORIGIN REPLY RECV");
-      NS_LOG_UNCOND("CURRENT DESTINATION SEQ NO = " << toDst.GetSeqNo() << " ,dest advertised hop count = " << toDst.GetAdvertisedHopCount());
-      NS_LOG_UNCOND("RREP DEST SEQ NO = " << rrepHeader.GetDstSeqno() << ", hopcount = " << (int)rrepHeader.GetHopCount());
-    }
+    NS_LOG_UNCOND("CHECK ABOVE ORIGIN REPLY RECV");
+    NS_LOG_UNCOND("CURRENT DESTINATION SEQ NO = " << toDst.GetSeqNo() << " ,dest advertised hop count = " << toDst.GetAdvertisedHopCount());
+    NS_LOG_UNCOND("RREP DEST SEQ NO = " << rrepHeader.GetDstSeqno() << ", hopcount = " << (int)rrepHeader.GetHopCount());
+    NS_LOG_UNCOND("RREP ID = " << rrepHeader.GetRequestID());
     /*
       * The existing entry is updated only in the following circumstances:
       * (i) the sequence number in the routing table is marked as invalid in route table entry.
@@ -1793,7 +1791,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     if ( (int32_t (rrepHeader.GetDstSeqno ()) - int32_t (toDst.GetSeqNo ())) > 0)
       {//TODO GETNUMBER OF PATHS = 0 DOESNT MEAN WE CAN ADD THIS
         toDst.SetSeqNo (rrepHeader.GetDstSeqno ());
-        toDst.SetAdvertisedHopCount (INFINITY2);
+        toDst.SetAdvertisedHopCount (INFINITY2);NS_LOG_UNCOND(toDst.GetNumberofPaths());
         toDst.PathAllDelete ();
         toDst.SetFlag (VALID);
         /* Insert forward path to RREQ destination. */NS_LOG_UNCOND(toDst.GetNumberofPaths());
@@ -1951,21 +1949,13 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
           //reversePath->SetExpire (Simulator::Now() + m_activeRouteTimeout);  
           // CHANGE
           toDst.SetError (true);
+          m_routingTable.Update(toDst);
 	      }
     }
   else
     {
-      NS_LOG_UNCOND("FORWARD PATH NEXT HOP = " << forwardPath->GetNextHop() << " last hop = " << forwardPath->GetLastHop());
-      NS_LOG_UNCOND("reverse PATH NEXT HOP = " << revNextHop << " last hop = " << revLastHop);
-      NS_LOG_UNCOND("RREP ORIGIN = " << rrepHeader.GetOrigin () << " FIRST HOP = " << rrepHeader.GetFirstHop ());
-      NS_LOG_UNCOND("ERROR GOING IN ELSE STATEMENT");
       return;
     }
-      NS_LOG_UNCOND("FORWARD PATH NEXT HOP = " << forwardPath->GetNextHop() << " last hop = " << forwardPath->GetLastHop());
-      NS_LOG_UNCOND("reverse PATH NEXT HOP = " << revNextHop << " last hop = " << revLastHop);
-      NS_LOG_UNCOND("RREP ORIGIN = " << sender << " FIRST HOP = " << rrepHeader.GetFirstHop ());
-      NS_LOG_UNCOND("\n");
-  //NS_LOG_UNCOND("JUST IN CASE");
   #endif // AOMDV_LINK_DISJOINT_PATHS
   NS_LOG_UNCOND("SENDING RREP FROM " << receiver << " to " << toOrigin.PathFind ()->GetNextHop() << " ,id = "<< 
                 rrepHeader.GetRequestID() << " ,at = " << Simulator::Now().GetSeconds());
