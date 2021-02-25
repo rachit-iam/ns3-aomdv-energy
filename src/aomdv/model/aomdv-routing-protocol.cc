@@ -1641,7 +1641,7 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry & t
   RrepHeader rrepHeader ( /*prefixSize=*/ 0, /*hops=*/ 0, /*dst=*/ rreqHeader.GetDst (),
                           /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), 
                           /*requestId=*/ rreqHeader.GetId (), /*firstHop=*/firstHop,
-                          /*lifeTime=*/ m_myRouteTimeout, /*MRE*/ INFINITY3, pos.first , pos.second, rreqHeader.GetSquaredDistance());
+                          /*lifeTime=*/ m_myRouteTimeout, /*MRE*/ INFINITY3, pos.first , pos.second, 0);
   Ptr<Packet> packet = Create<Packet> ();
   SocketIpTtlTag tag;
   //NS_LOG_UNCOND("TTL AT DESTINATION FOR RREP = " << toOrigin.GetAdvertisedHopCount ()+1);

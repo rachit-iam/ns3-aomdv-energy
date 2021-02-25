@@ -64,7 +64,7 @@ RoutingTableEntry::Path::Print (Ptr<OutputStreamWrapper> stream) const
   std::setiosflags (std::ios::left) << std::setprecision (2) <<
   std::setw (14) << (m_expire - Simulator::Now ()).GetSeconds ();
   *os << "\t" << m_hopCount;
-  *os << "\t" << m_MRE << "\t" << m_squaredDistance << "\n";
+  *os << "\t" << m_MRE << "\t\t" << m_squaredDistance << "\n";
 }
 
   /*
@@ -761,7 +761,7 @@ RoutingTable::Print (Ptr<OutputStreamWrapper> stream) const
   std::map<Ipv4Address, RoutingTableEntry> table = m_ipv4AddressEntry;
   Purge (table);
   *stream->GetStream () << "\nAOMDV Routing table\n"
-                        << "Destination\tFlag\tGateway\t\tInterface\tExpire\t\tHops\n";
+                        << "Destination\tFlag\tGateway\t\tInterface\tExpire\t\tHops\tR Energy\tSquared Distance\n";
   for (std::map<Ipv4Address, RoutingTableEntry>::const_iterator i =
          table.begin (); i != table.end (); ++i)
     {
