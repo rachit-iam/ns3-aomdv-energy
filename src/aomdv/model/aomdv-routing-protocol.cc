@@ -566,7 +566,7 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
   Ipv4Address dst = header.GetDestination ();
   Ipv4Address origin = header.GetSource ();
   m_routingTable.Purge ();
-  //NS_LOG_UNCOND("YO SOURCE = " << origin << ", dest = " << dst << ", mynode = ");
+  //NS_LOG_UNCOND("YO SOURCE = " << origin << ", dest = " << dst << ", mynode = " << m_ipv4->GetAddress(1,0).GetLocal());
   RoutingTableEntry toDst;
   if (m_routingTable.LookupRoute (dst, toDst))
     {
@@ -593,10 +593,11 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
            */
           RoutingTableEntry toOrigin;
           m_routingTable.LookupRoute (origin, toOrigin);
-          UpdatePathsLifeTime (toOrigin.PathFind ()->GetNextHop (), m_activeRouteTimeout);
-
+          //NS_LOG_UNCOND(toOrigin.GetLifeTime() << " " << );
+          if(toOrigin.GetNumberofPaths())UpdatePathsLifeTime (toOrigin.PathFind ()->GetNextHop (), m_activeRouteTimeout);
+          //todo change if(toOrigin.GetNumberofPaths()) dont know why 
           m_nb.Update (route->GetGateway (), m_activeRouteTimeout);
-          m_nb.Update (toOrigin.PathFind ()->GetNextHop (), m_activeRouteTimeout);//todo only one is updating
+          if(toOrigin.GetNumberofPaths())m_nb.Update (toOrigin.PathFind ()->GetNextHop (), m_activeRouteTimeout);//todo only one is updating
 
           ucb (route, p, header);
           return true;
@@ -1634,7 +1635,7 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry & t
    * Destination node MUST increment its own sequence number by one if the sequence number in the RREQ packet is equal to that
    * incremented value. Otherwise, the destination does not change its sequence number before generating the  RREP message.
    */
-  if ( m_seqNo <= rreqHeader.GetDstSeqno())//change from real ns2.35
+  if ( m_seqNo <= rreqHeader.GetDstSeqno())//change from real ns
     m_seqNo = rreqHeader.GetDstSeqno()+1;
   if (m_seqNo%2) m_seqNo++;
   std::pair<uint32_t, uint32_t> pos = GetPosition();
