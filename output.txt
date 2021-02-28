@@ -1,0 +1,4 @@
+Waf: Entering directory `/home/rachit/experiments/ns-3.29-UNSTABLE/build'
+Waf: Leaving directory `/home/rachit/experiments/ns-3.29-UNSTABLE/build'
+Build commands will be stored in build/compile_commands.json
+'build' finished successfully (3.788s)

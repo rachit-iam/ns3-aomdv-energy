@@ -136,7 +136,7 @@ main (int argc, char *argv[])
   uint32_t numNodes = 25; // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
-  double interval = 1; // seconds
+  double interval = 10; // seconds
   bool verbose = false;
   bool tracing = true;
 
@@ -254,7 +254,7 @@ main (int argc, char *argv[])
     }
 
   // Give OLSR time to converge-- 30 seconds perhaps
-  Simulator::Schedule (Seconds (30.0), &GenerateTraffic, source, packetSize, numPackets,
+  Simulator::Schedule (Seconds (10.0), &GenerateTraffic, source, packetSize, numPackets,
                        interPacketInterval);
   //Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
   // Output what we are doing
@@ -262,7 +262,7 @@ main (int argc, char *argv[])
                                       << distance);
 
   AnimationInterface anim ("animation.xml");
-  Simulator::Stop (Seconds (70.0));
+  Simulator::Stop (Seconds (100.0));
   Simulator::Run ();
   Simulator::Destroy ();
 
