@@ -1,5 +1,10 @@
-some routes for origin are automatically deleted at time 28 when sending 50 packets at interval of 10.00s
+some routes for origin are automatically deleted at time 28 when sending 50 packets at interval of 1.00s
 
 after path expiration path is not deleted
 
 multiuple paths still not forming in many cases
+
+Route lifetime functions is working fine but path->SetExpire function is not working neither Updatepathtime but actually 
+we dont need that as we have to work on the latest energy and every path nees to be updated after some time
+
+actually path expiratin work if we do the routeUpdate after that

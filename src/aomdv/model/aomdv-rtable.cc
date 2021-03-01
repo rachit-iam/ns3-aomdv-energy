@@ -488,6 +488,7 @@ RoutingTableEntry::Print (Ptr<OutputStreamWrapper> stream) const
         break;
       }
     }
+  *os << "  " << (m_lifeTime - Simulator::Now()).GetSeconds();
    for (std::vector<Path>::const_iterator i = m_pathList.begin (); i!= m_pathList.end (); ++i)
      {
        i->Print (stream);

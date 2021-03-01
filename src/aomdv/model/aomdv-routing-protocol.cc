@@ -377,9 +377,13 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
           sockerr = Socket::ERROR_NOROUTETOHOST;
           return Ptr<Ipv4Route> ();
         }
-      UpdateRouteLifeTime (dst, m_activeRouteTimeout);
+      
       UpdatePathsLifeTime (route->GetGateway (), m_activeRouteTimeout);
       path->SetExpire (std::max (m_activeRouteTimeout, path->GetExpire ()));
+      m_routingTable.Update(rt);
+      UpdateRouteLifeTime (dst, m_activeRouteTimeout);
+      NS_LOG_UNCOND("PATH EXPIRY expected = " << path->GetExpire().GetSeconds() << " real = " << rt.PathLoadBalancedFind ()->GetExpire().GetSeconds());
+      //m_routingTable.Update(rt);//change 3/1/2021
       return route;
     }
 
@@ -1174,7 +1178,7 @@ RoutingProtocol::UpdateRouteLifeTime (Ipv4Address addr, Time lifetime)
 }
 
 bool
-RoutingProtocol::UpdatePathsLifeTime (Ipv4Address addr, Time lifetime)
+RoutingProtocol::UpdatePathsLifeTime (Ipv4Address addr, Time lifetime)//todo thias is not woking
 {
   NS_LOG_FUNCTION (this << addr << lifetime);
   RoutingTableEntry rt;
@@ -1185,13 +1189,13 @@ RoutingProtocol::UpdatePathsLifeTime (Ipv4Address addr, Time lifetime)
           NS_LOG_DEBUG ("Updating VALID route");
           rt.SetRreqCnt (0);
           rt.SetLifeTime (std::max (lifetime, rt.GetLifeTime ()));
-          m_routingTable.Update (rt);
           std::vector<RoutingTableEntry::Path> paths;
           rt.GetPaths (paths);
           for (std::vector<RoutingTableEntry::Path>::iterator i = paths.begin (); i!= paths.end (); ++i)
             {
                i->SetExpire (std::max (lifetime, i->GetExpire ()));
             }
+          m_routingTable.Update (rt);//change 3/1/2021
           return true;
         }
     }
@@ -1351,7 +1355,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
               {
                 reversePath->SetExpire (std::max (
                     reversePath->GetExpire (),
-                    Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime))));//todo update mre and pos
+                    Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime))));//todo update mre and pos and this is not working
               }
             NS_ASSERT(reversePath->GetHopCount () == (rreqHeader.GetHopCount () + 1));
           }
@@ -1845,7 +1849,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
             if (forwardPath->GetHopCount () == hop)
               {
                 forwardPath->SetExpire (std::max (forwardPath->GetExpire (), Simulator::Now() + rrepHeader.GetLifeTime ()));
-                forwardPath->SetMRE(rrepHeader.GetMRE ());
+                forwardPath->SetMRE(rrepHeader.GetMRE ());//todo not working
                 forwardPath->SetSquaredDistance(squaredDistance);
               }
           }
