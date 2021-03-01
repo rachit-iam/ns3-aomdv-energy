@@ -382,7 +382,7 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
       path->SetExpire (std::max (m_activeRouteTimeout, path->GetExpire ()));
       m_routingTable.Update(rt);
       UpdateRouteLifeTime (dst, m_activeRouteTimeout);
-      NS_LOG_UNCOND("PATH EXPIRY expected = " << path->GetExpire().GetSeconds() << " real = " << rt.PathLoadBalancedFind ()->GetExpire().GetSeconds());
+      //NS_LOG_UNCOND("PATH EXPIRY expected = " << path->GetExpire().GetSeconds() << " real = " << rt.PathLoadBalancedFind ()->GetExpire().GetSeconds());
       //m_routingTable.Update(rt);//change 3/1/2021
       return route;
     }
@@ -1906,6 +1906,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   RoutingTableEntry toOrigin;
   uint32_t id = rrepHeader.GetRequestID ();
   b = m_rreqIdCache.GetId (rrepHeader.GetOrigin(), id);///CHANGED FROM DST TO ORIGIN
+  Ipv4Address nextHop;
   //NS_LOG_UNCOND("Check middle of recv reply");
   #ifdef AOMDV_NODE_DISJOINT_PATHS
   if (!m_routingTable.LookupRoute (rrepHeader.GetOrigin (), toOrigin) || (toOrigin.GetFlag () != VALID)
@@ -1933,6 +1934,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   reversePath->SetExpire (Simulator::Now() + m_activeRouteTimeout);
   toDst.SetError (true);
   m_routingTable.Update(toDst);
+  nextHop = toOrigin.PathFind ()->GetNextHop ();
   #endif // AOMDV_NODE_DISJOINT_PATHS
 
   #ifdef AOMDV_LINK_DISJOINT_PATHS
@@ -1988,6 +1990,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     {
       return;
     }
+  nextHop = revNextHop;
   #endif // AOMDV_LINK_DISJOINT_PATHS
   //NS_LOG_UNCOND("SENDING RREP FROM " << receiver << " to " << toOrigin.PathFind ()->GetNextHop() << " ,id = "<< 
   //              rrepHeader.GetRequestID() << " ,at = " << Simulator::Now().GetSeconds());
@@ -2012,7 +2015,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.PathFind ()->GetInterface ());
   NS_ASSERT (socket);
   
-  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.PathFind ()->GetNextHop (), AOMDV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (nextHop, AOMDV_PORT));
 }
 
 void
