@@ -90,40 +90,59 @@
 
 using namespace ns3;
 
+uint32_t receivedPacketCount = 0;
+uint32_t sentPacketCount = 0;
 NS_LOG_COMPONENT_DEFINE ("WifiSimpleAdhocGrid");
+std::map <Ptr<Node> , uint32_t > nodes; 
+std::vector <bool> active;
 
-void
-ReceivePacket (Ptr<Socket> socket)
+void ReceivePacket (Ptr<Socket> socket)
 {
   while (socket->Recv ())
     {
-      NS_LOG_UNCOND ("Received one packet at time = " << Simulator::Now().GetSeconds());
+      NS_LOG_UNCOND ("Received one packet! by "<<nodes[socket->GetNode()]<<" at "<< Simulator::Now());
+      receivedPacketCount++;
     }
 }
 
-static void
-GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize, uint32_t pktCount, Time pktInterval)
+static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
+                             uint32_t pktCount, Time pktInterval )
 {
   if (pktCount > 0)
     {
       socket->Send (Create<Packet> (pktSize));
-      Simulator::Schedule (pktInterval, &GenerateTraffic, socket, pktSize, pktCount - 1,
-                           pktInterval);
+      NS_LOG_UNCOND("Sending one packet from "<<nodes[socket->GetNode()]<<" at "<< Simulator::Now().GetSeconds());
+      Simulator::Schedule (pktInterval, &GenerateTraffic,
+                           socket, pktSize,pktCount - 1, pktInterval);
     }
   else
     {
       socket->Close ();
+      active[nodes[socket->GetNode()]] = 0;
     }
 }
 
-void 
-EnergyCheck(NodeContainer c) {
-    NS_LOG_UNCOND("Time = " << Simulator::Now());
-    for(NodeContainer::Iterator i = c.Begin() ; i < c.End() ; i++){
-        NS_LOG_UNCOND((*i)->GetId() << " energy = " << (*i)->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
-    }
-    NS_LOG_UNCOND("\n");
-    Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
+static void SendPackets(uint32_t sourceNode, uint32_t sinkNode, uint32_t pktSize,  uint32_t pktCount, NodeContainer c, Ipv4InterfaceContainer i){
+        if(active[sinkNode] || active[sourceNode]) return ;
+        TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+        Ptr<Socket> recvSink = Socket::CreateSocket (c.Get (sinkNode), tid);
+        Ipv4Address anyAd = Ipv4Address::GetAny();
+        InetSocketAddress local = InetSocketAddress (anyAd, 80);
+        recvSink->Bind (local);
+        recvSink->SetRecvCallback (MakeCallback (&ReceivePacket));  
+        Ptr<Socket> source = Socket::CreateSocket (c.Get (sourceNode), tid);
+        InetSocketAddress remote = InetSocketAddress (i.GetAddress (sinkNode, 0), 80);
+        source->Connect (remote);
+        active[sourceNode] = 1;
+        Time pktInterval = Seconds(1.0);  
+        sentPacketCount += pktCount;      
+        Simulator::Schedule(pktInterval, &GenerateTraffic, source, pktSize, pktCount, pktInterval);
+}
+
+int randomInRange(int start =0, int end = 1000){
+        int range = end-start+1;
+        int result = rand()%range + start;
+        return result;
 }
 
 int
@@ -132,13 +151,16 @@ main (int argc, char *argv[])
   std::string phyMode ("DsssRate1Mbps");
   double distance = 500; // m
   uint32_t packetSize = 1000; // bytes
-  uint32_t numPackets = 5;
+  uint32_t numPackets = 50;
   uint32_t numNodes = 25; // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
-  double interval = 10; // seconds
+  double interval = 1; // seconds
   bool verbose = false;
   bool tracing = true;
+
+  uint32_t simulationDuration = 200;
+  uint32_t numberOfPings = 2;
 
   CommandLine cmd;
   cmd.AddValue ("phyMode", "Wifi Phy mode", phyMode);
@@ -160,6 +182,10 @@ main (int argc, char *argv[])
 
   NodeContainer c;
   c.Create (numNodes);
+
+  for(uint32_t n=0; n<numNodes; n++){
+        nodes[c.Get(n)] = n;
+  }
 
   // The below set of helpers will help us to put together the wifi NICs we want
   WifiHelper wifi;
@@ -227,15 +253,28 @@ main (int argc, char *argv[])
   ipv4.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer i = ipv4.Assign (devices);
 
-  TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-  Ptr<Socket> recvSink = Socket::CreateSocket (c.Get (sinkNode), tid);
-  InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 80);
-  recvSink->Bind (local);
-  recvSink->SetRecvCallback (MakeCallback (&ReceivePacket));
+  // Start Application
+ Ptr<UniformRandomVariable> xx = CreateObject<UniformRandomVariable> ();
+ std::vector <Time> lastUsed(numNodes, Seconds(5));
+ active.assign(numNodes,false);
+ 
+  for(uint32_t loops=0; loops<numberOfPings;loops++){
+        sinkNode = randomInRange(0,numNodes-1);
+        sourceNode = randomInRange(0,numNodes-1);
+        if(sinkNode==sourceNode) {
+                loops--;
+                continue;
+        }
 
-  Ptr<Socket> source = Socket::CreateSocket (c.Get (sourceNode), tid);
-  InetSocketAddress remote = InetSocketAddress (i.GetAddress (sinkNode, 0), 80);
-  source->Connect (remote);
+        Time sch = Max(lastUsed[sourceNode], lastUsed[sinkNode]) + Seconds(xx->GetValue(50.0, 70.0));
+        lastUsed[sinkNode] =sch;
+        lastUsed[sourceNode] = sch;
+        if(sch > Seconds(simulationDuration  -2)) continue;
+        NS_LOG_UNCOND("Sending "<<numPackets<<" packets from "<<sourceNode <<" to "<<sinkNode<<" at time "<<sch);
+        Simulator::Schedule(sch, &SendPackets, sourceNode, sinkNode, packetSize, numPackets,  c, i);
+        //Simulator::Schedule (Seconds (time), &GenerateTraffic,
+                       //source, packetSize, numPackets, interPacketInterval);
+  }
 
   if (tracing == true)
     {
@@ -253,18 +292,15 @@ main (int argc, char *argv[])
       // To do-- enable an IP-level trace that shows forwarding events only
     }
 
-  // Give OLSR time to converge-- 30 seconds perhaps
-  Simulator::Schedule (Seconds (10.0), &GenerateTraffic, source, packetSize, numPackets,
-                       interPacketInterval);
-  //Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
-  // Output what we are doing
   NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance "
                                       << distance);
 
   AnimationInterface anim ("animation.xml");
-  Simulator::Stop (Seconds (100.0));
+  Simulator::Stop (Seconds (simulationDuration));
   Simulator::Run ();
   Simulator::Destroy ();
+
+  NS_LOG_UNCOND("sent:"<<sentPacketCount<<" , received:"<<receivedPacketCount);
 
   return 0;
 }
