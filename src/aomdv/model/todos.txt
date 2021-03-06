@@ -10,3 +10,8 @@ we dont need that as we have to work on the latest energy and every path nees to
 actually path expiratin work if we do the routeUpdate after that
 
 after route expiry from valid , route doesnt get deleted but goed to down/invalid with a time period of 15s.
+
+may have to increase route expiration time as when interval is set to 1s and we have 5 paths then it takes 5s but route expiration time max can be 4.2 s smthng
+
+//a good rerr checking case can be wifi-energy-longRange with interval = 1s as RERR is produced but packet is not received afte that
+

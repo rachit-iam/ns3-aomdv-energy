@@ -557,7 +557,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
 
   // Forwarding
   //energy example
-  //NS_LOG_UNCOND("Node " << m_ipv4->GetObject<Node> ()->GetId () << "has energy remaining = " << m_ipv4->GetObject<Node> ()->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
+  NS_LOG_UNCOND("Node " << m_ipv4->GetObject<Node> ()->GetId () << "has energy remaining = " << m_ipv4->GetObject<Node> ()->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
   //NS_LOG_UNCOND("check route input packet id = " << p->GetUid() << "current node = " << m_ipv4->GetAddress (1, 0).GetLocal ()<< "at " << Simulator::Now().GetSeconds());
   return Forwarding (p, header, ucb, ecb);
 }
@@ -1748,7 +1748,7 @@ void
 RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sender)
 {
   NS_LOG_FUNCTION (this << " src " << sender);
-  NS_LOG_UNCOND("START RECVREPLY at " << receiver);
+  //NS_LOG_UNCOND("START RECVREPLY at " << receiver);
   RrepHeader rrepHeader;
   p->RemoveHeader (rrepHeader);
   IdCache::UniqueId* b = NULL;
@@ -1816,7 +1816,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
     // and the known value is valid,
     //NS_LOG_UNCOND("number of paths before= " << toDst.GetNumberofPaths() );
     //TODO WHY NS_LOG_UNCOND()
-    NS_LOG_UNCOND("Check middle of recv reply , rrep seq no = " << rrepHeader.GetDstSeqno () << " dst seq no = " << toDst.GetSeqNo ());
+    //NS_LOG_UNCOND("Check middle of recv reply , rrep seq no = " << rrepHeader.GetDstSeqno () << " dst seq no = " << toDst.GetSeqNo ());
     if ( (int32_t (rrepHeader.GetDstSeqno ()) - int32_t (toDst.GetSeqNo ())) > 0)
       {//TODO GETNUMBER OF PATHS = 0 DOESNT MEAN WE CAN ADD THIS
         toDst.SetSeqNo (rrepHeader.GetDstSeqno ());
@@ -1900,7 +1900,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
       NS_LOG_UNCOND("RREP has been received at origin AT " << Simulator::Now().GetSeconds() << " to " << toDst.PathFind()->GetNextHop ());
       //NS_LOG_UNCOND(rrepHeader.GetOrigin());
       //NS_LOG_UNCOND(toDst.GetNumberofPaths());
-      SendPacketFromQueue (dst, toDst.PathFind()->GetRoute ());
+      SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());
       return;
     }
   RoutingTableEntry toOrigin;
@@ -2141,7 +2141,7 @@ RoutingProtocol::RouteRequestTimerExpire (Ipv4Address dst)
   //NS_LOG_UNCOND(dst);
   if (m_routingTable.LookupValidRoute (dst, toDst))
     {
-      SendPacketFromQueue (dst, toDst.PathFind ()->GetRoute ());
+      SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());
       NS_LOG_LOGIC ("route to " << dst << " found");
       return;
     }

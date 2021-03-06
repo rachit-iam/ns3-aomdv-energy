@@ -259,6 +259,7 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
   Path *path = NULL;
   //NS_LOG_UNCOND("PATH FIND CHECK" << m_pathList.size());
   std::vector<Path>::iterator i = m_pathList.begin ();
+  std::advance(i, std::rand() % m_pathList.size());
   path = &(*i);
   return path;
 }

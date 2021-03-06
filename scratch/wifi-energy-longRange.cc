@@ -136,7 +136,7 @@ main (int argc, char *argv[])
   uint32_t numNodes = 25; // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
-  double interval = 1; // seconds
+  double interval = 0.5; // seconds
   bool verbose = false;
   bool tracing = true;
 
