@@ -557,7 +557,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
 
   // Forwarding
   //energy example
-  NS_LOG_UNCOND("Node " << m_ipv4->GetObject<Node> ()->GetId () << "has energy remaining = " << m_ipv4->GetObject<Node> ()->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
+  //NS_LOG_UNCOND("Node " << m_ipv4->GetObject<Node> ()->GetId () << "has energy remaining = " << m_ipv4->GetObject<Node> ()->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
   //NS_LOG_UNCOND("check route input packet id = " << p->GetUid() << "current node = " << m_ipv4->GetAddress (1, 0).GetLocal ()<< "at " << Simulator::Now().GetSeconds());
   return Forwarding (p, header, ucb, ecb);
 }
@@ -1643,8 +1643,8 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry & t
     m_seqNo = rreqHeader.GetDstSeqno()+1;
   if (m_seqNo%2) m_seqNo++;
   std::pair<uint32_t, uint32_t> pos = GetPosition();
-  NS_LOG_UNCOND("destination seq no = " << m_seqNo);
-  NS_LOG_UNCOND("RREQ HEADER SEQ NO = " << rreqHeader.GetDstSeqno());
+  //NS_LOG_UNCOND("destination seq no = " << m_seqNo);
+  //NS_LOG_UNCOND("RREQ HEADER SEQ NO = " << rreqHeader.GetDstSeqno());
   RrepHeader rrepHeader ( /*prefixSize=*/ 0, /*hops=*/ 0, /*dst=*/ rreqHeader.GetDst (),
                           /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), 
                           /*requestId=*/ rreqHeader.GetId (), /*firstHop=*/firstHop,

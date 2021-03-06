@@ -259,8 +259,31 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
   Path *path = NULL;
   //NS_LOG_UNCOND("PATH FIND CHECK" << m_pathList.size());
   std::vector<Path>::iterator i = m_pathList.begin ();
-  std::advance(i, std::rand() % m_pathList.size());
-  path = &(*i);
+  if(m_pathList.size() < 2) {
+    path = &(*i);
+    return path;
+  }
+  double sum = 0.0 , midSum = 0.0;
+  Ptr<UniformRandomVariable> rr = CreateObject<UniformRandomVariable> ();
+  for(; i != m_pathList.end () ; i++) {
+    sum += 10000.0 / i->GetSquaredDistance ();
+  }
+  double z = rr->GetValue(0.0 , 1.0)*sum;
+  //NS_LOG_UNCOND("Random value = " << z << " Sum = " << sum);
+  i = m_pathList.begin ();
+  for( ; i != m_pathList.end() ; i++) {
+    midSum += 10000.0 / i->GetSquaredDistance ();
+    if(z <= midSum) {
+      path = &(*i);
+      break;
+    }
+    //NS_LOG_UNCOND("Midsum = " << midSum);
+  }
+  if(path == NULL) {
+    i = m_pathList.begin ();
+    path = &(*i);
+  }
+  NS_LOG_UNCOND("Next hop is " << path->GetNextHop ());
   return path;
 }
 

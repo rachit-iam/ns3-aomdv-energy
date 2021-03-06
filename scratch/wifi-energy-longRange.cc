@@ -132,11 +132,11 @@ main (int argc, char *argv[])
   std::string phyMode ("DsssRate1Mbps");
   double distance = 100; // m
   uint32_t packetSize = 1000; // bytes
-  uint32_t numPackets = 5;
+  uint32_t numPackets = 50;
   uint32_t numNodes = 25; // by default, 5x5
   uint32_t sinkNode = 0;
   uint32_t sourceNode = 24;
-  double interval = 0.5; // seconds
+  double interval = 0.1; // seconds
   bool verbose = false;
   bool tracing = true;
 

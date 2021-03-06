@@ -37,6 +37,7 @@
 #include "ns3/timer.h"
 #include "ns3/net-device.h"
 #include "ns3/output-stream-wrapper.h"
+#include "ns3/random-variable-stream.h"
 #include <vector>
 
 #define INFINITY2 0xff
