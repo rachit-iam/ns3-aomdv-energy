@@ -15,3 +15,11 @@ may have to increase route expiration time as when interval is set to 1s and we 
 
 //a good rerr checking case can be wifi-energy-longRange with interval = 1s as RERR is produced but packet is not received afte that
 
+in aomdv if rrep is received then the rrep is sent to the maximum hop available path for more paths
+
+the problem im facing is called route cutoff problem
+
+also load balancing faces interference problem
+
+
+
