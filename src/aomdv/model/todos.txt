@@ -21,5 +21,9 @@ the problem im facing is called route cutoff problem
 
 also load balancing faces interference problem
 
-
+what we are doing here is even though when dest recieves rreq and it doesnt form a path due to disjointedness we are
+sending a rrep along the sender neighbor, so what we can do is if we recieve a rreq at dest for which the first hop is
+same and thus we cant form a path then we send the rrep to that sender neighbor and in the rrep record a field called first-hop
+so when any intermediate node receives this rrep it knows that it cannot send its data through a path which has first-hop as 
+the recorded value in rrep.
 
