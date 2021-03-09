@@ -27,3 +27,11 @@ same and thus we cant form a path then we send the rrep to that sender neighbor 
 so when any intermediate node receives this rrep it knows that it cannot send its data through a path which has first-hop as 
 the recorded value in rrep.
 
+insertprecursor is not used in recvreply and thus most of the times it is empty
+
+also when we are getting a rerr for a dest from a src we are deleting the whole route instead of a path (random -   uint32_t numPackets = 350;
+  uint32_t numNodes = 100; // by default, 5x5
+  uint32_t sinkNode = 32;
+  uint32_t sourceNode = 2;
+  double interval = 0.1; // seconds
+  )

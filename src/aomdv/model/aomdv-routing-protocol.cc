@@ -1873,7 +1873,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
       }
     else          
       {
-        NS_LOG_UNCOND("IS THIS THE ERROR");
+        NS_LOG_UNCOND("IS THIS THE ERROR " << rrepHeader.GetDstSeqno () << " " << toDst.GetSeqNo ());
         return;
       }
     m_routingTable.Update(toDst);
@@ -2076,7 +2076,7 @@ RoutingProtocol::ProcessHello (RrepHeader const & rrepHeader, Ipv4Address receiv
 void
 RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
 {
-  NS_LOG_UNCOND (this << " from " << src);
+  NS_LOG_UNCOND (this << " from " << src << " received at " << m_ipv4->GetAddress(1,0).GetLocal() << " at " << Simulator::Now().GetSeconds());
   RerrHeader rerrHeader;
   p->RemoveHeader (rerrHeader);
   std::map<Ipv4Address, uint32_t> dstWithNextHopSrc;
@@ -2084,7 +2084,8 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
   m_routingTable.GetListOfDestinationWithNextHop (src, dstWithNextHopSrc);
   std::pair<Ipv4Address, uint32_t> un;
   while (rerrHeader.RemoveUnDestination (un))
-    {
+    { 
+
       for (std::map<Ipv4Address, uint32_t>::const_iterator i =
            dstWithNextHopSrc.begin (); i != dstWithNextHopSrc.end (); ++i)
       {
@@ -2116,6 +2117,7 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
           RoutingTableEntry toDst;
           m_routingTable.LookupRoute (i->first, toDst);
           toDst.GetPrecursors (precursors);
+          NS_LOG_UNCOND(precursors.size());
           ++i;
         }
     }
@@ -2395,7 +2397,7 @@ void
 RoutingProtocol::SendRerrMessage (Ptr<Packet> packet, std::vector<Ipv4Address> precursors)
 {
   NS_LOG_FUNCTION (this);
-
+  //NS_ASSERT(1 == 0);
   if (precursors.empty ())
     {
       NS_LOG_LOGIC ("No precursors");

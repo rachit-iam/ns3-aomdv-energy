@@ -120,11 +120,12 @@ GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize, uint32_t pktCount, Time p
 void 
 EnergyCheck(NodeContainer c) {
     NS_LOG_UNCOND("Time = " << Simulator::Now());
+    double Emin = 1000.0;
     for(NodeContainer::Iterator i = c.Begin() ; i < c.End() ; i++){
-        NS_LOG_UNCOND((*i)->GetId() << " energy = " << (*i)->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
+        double e = ((*i)->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
+        Emin = std::min(Emin, e);
     }
-    NS_LOG_UNCOND("\n");
-    Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
+    NS_LOG_UNCOND("Minimum energy = " << Emin << "\n");
 }
 
 int
@@ -133,11 +134,11 @@ main (int argc, char *argv[])
   std::string phyMode ("DsssRate1Mbps");
   double distance = 500; // m
   uint32_t packetSize = 1000; // bytes
-  uint32_t numPackets = 5;
+  uint32_t numPackets = 350;
   uint32_t numNodes = 100; // by default, 5x5
-  uint32_t sinkNode = 9;
+  uint32_t sinkNode = 32;
   uint32_t sourceNode = 2;
-  double interval = 1; // seconds
+  double interval = 0.1; // seconds
   bool verbose = false;
   bool tracing = true;
 
@@ -171,7 +172,7 @@ main (int argc, char *argv[])
 
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   // set it to zero; otherwise, gain will be added
-  wifiPhy.Set ("RxGain", DoubleValue (-10));
+  wifiPhy.Set ("RxGain", DoubleValue (-15));
   // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
   wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
 
@@ -191,8 +192,8 @@ main (int argc, char *argv[])
 
   MobilityHelper mobility;
    mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
-                                  "X", StringValue ("ns3::UniformRandomVariable[Min=0|Max=2000]"),
-                                  "Y", StringValue ("ns3::UniformRandomVariable[Min=0|Max=2000]"));
+                                  "X", StringValue ("ns3::UniformRandomVariable[Min=0|Max=1000]"),
+                                  "Y", StringValue ("ns3::UniformRandomVariable[Min=0|Max=1000]"));
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (c);
 
@@ -256,11 +257,12 @@ main (int argc, char *argv[])
   // Give OLSR time to converge-- 30 seconds perhaps
   Simulator::Schedule (Seconds (30.0), &GenerateTraffic, source, packetSize, numPackets,
                        interPacketInterval);
+  Simulator::Schedule(Seconds(69.0), &EnergyCheck, c);
   //Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
   // Output what we are doing
   NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance "
                                       << distance);
-
+  
   AnimationInterface anim ("animation.xml");
   Simulator::Stop (Seconds (70.0));
   Simulator::Run ();
