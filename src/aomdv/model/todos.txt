@@ -35,3 +35,5 @@ also when we are getting a rerr for a dest from a src we are deleting the whole 
   uint32_t sourceNode = 2;
   double interval = 0.1; // seconds
   )
+
+do load balanced at intermediate nodes as well if neccessary
