@@ -130,7 +130,7 @@ RoutingProtocol::RoutingProtocol () :
   m_timeoutBuffer (2),
   m_rreqRateLimit (10),
   m_rerrRateLimit (10),
-  m_activeRouteTimeout (Seconds (3)),
+  m_activeRouteTimeout (Time(Seconds (5))),
   m_netDiameter (35),
   m_nodeTraversalTime (MilliSeconds (40)),
   m_netTraversalTime (Time ((2 * m_netDiameter) * m_nodeTraversalTime)),
@@ -272,6 +272,7 @@ void
 RoutingProtocol::SetMaxQueueLen (uint32_t len)
 {
   m_maxQueueLen = len;
+  m_activeRouteTimeout = Seconds(5);// i dont kno why i ve to cheange this here, but when i was changing in the original position it was not working
   m_queue.SetMaxQueueLen (len);
 }
 void
@@ -611,13 +612,13 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
           if (toDst.GetValidSeqNo ())
             {
               SendRerrWhenNoRouteToForward (dst, toDst.GetSeqNo (), origin);
-              //NS_LOG_UNCOND ("Drop packet " << p->GetUid () << " because no route to forward it.");
+              NS_LOG_UNCOND ("Drop packet " << p->GetUid () << " because no route to forward it.");
               return false;
             }
         }
     }
-  //NS_LOG_UNCOND ("route not found to "<< dst << ". Send RERR message.");
-  //NS_LOG_UNCOND ("Drop packet " << p->GetUid () << " because no route to forward it.");
+  NS_LOG_UNCOND ("route not found to "<< dst << ". Send RERR message.");
+  NS_LOG_UNCOND ("Drop packet " << p->GetUid () << " because no route to forward it 2.");
   SendRerrWhenNoRouteToForward (dst, 0, origin);
   return false;
 }

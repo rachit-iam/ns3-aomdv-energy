@@ -246,10 +246,10 @@ main (int argc, char *argv[])
       // Trace routing tables
       Ptr<OutputStreamWrapper> routingStream =
           Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.routes", std::ios::out);
-      aomdv.PrintRoutingTableAllEvery (Seconds (2), routingStream);
+      aomdv.PrintRoutingTableAllEvery (Seconds (1), routingStream);
       Ptr<OutputStreamWrapper> neighborStream =
           Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.neighbors", std::ios::out);
-      aomdv.PrintNeighborCacheAllEvery (Seconds (2), neighborStream);
+      aomdv.PrintNeighborCacheAllEvery (Seconds (1), neighborStream);
 
       // To do-- enable an IP-level trace that shows forwarding events only
     }
