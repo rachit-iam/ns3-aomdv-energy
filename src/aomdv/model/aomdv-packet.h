@@ -109,7 +109,7 @@ public:
               uint32_t requestID = 0, Ipv4Address dst = Ipv4Address (),
               uint32_t dstSeqNo = 0, Ipv4Address origin = Ipv4Address (),
               uint32_t originSeqNo = 0, Ipv4Address firstHop = Ipv4Address(), uint32_t MRE = INFINITY3,
-              uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0);
+              uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0, uint64_t timeStamp = 0);
 
   ///\name Header serialization/deserialization
   //\{
@@ -145,6 +145,8 @@ public:
   uint32_t GetY () { return m_y; }
   void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
   uint32_t GetSquaredDistance () { return m_squaredDistance; }
+  void SetTimeStamp (uint64_t timeStamp) { m_timeStamp = timeStamp; }
+  uint64_t GetTimeStamp () { return m_timeStamp; }
   //\}
 
   ///\name Flags
@@ -172,6 +174,7 @@ private:
   uint32_t       m_x;
   uint32_t       m_y;
   uint32_t       m_squaredDistance;
+  uint64_t       m_timeStamp;
 };
 
 std::ostream & operator<< (std::ostream & os, RreqHeader const &);
@@ -203,7 +206,7 @@ public:
                 Ipv4Address (), uint32_t dstSeqNo = 0, Ipv4Address origin =
                 Ipv4Address (), uint32_t requestID = 0,  Ipv4Address firstHop =
                 Ipv4Address (), Time lifetime = MilliSeconds (0), uint32_t MRE = INFINITY3,
-                uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0);
+                uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0, uint64_t timeStamp = 0);
 
   ///\name Header serialization/deserialization
   //\{
@@ -239,6 +242,8 @@ public:
   uint32_t GetY () { return m_y; }
   void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
   uint32_t GetSquaredDistance () { return m_squaredDistance; }
+  void SetTimeStamp (uint64_t timeStamp) { m_timeStamp = timeStamp; }
+  uint64_t GetTimeStamp () { return m_timeStamp; }
   //\}
 
   ///\name Flags
@@ -267,6 +272,7 @@ private:
   uint32_t      m_x;
   uint32_t      m_y;
   uint32_t      m_squaredDistance;
+  uint64_t      m_timeStamp;
 };
 
 std::ostream & operator<< (std::ostream & os, RrepHeader const &);

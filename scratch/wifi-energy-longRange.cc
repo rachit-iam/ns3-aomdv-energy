@@ -262,7 +262,7 @@ main (int argc, char *argv[])
                                       << distance);
 
   AnimationInterface anim ("animation.xml");
-  Simulator::Stop (Seconds (100.0));
+  Simulator::Stop (Seconds (30.0));
   Simulator::Run ();
   Simulator::Destroy ();
 

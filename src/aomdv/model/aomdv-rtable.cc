@@ -41,9 +41,10 @@ namespace aomdv
 {
 
 RoutingTableEntry::Path::Path (Ptr<NetDevice> dev, Ipv4Address dst, Ipv4Address nextHop, uint16_t hopCount, 
-                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance) :
+                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                                uint32_t MRE, uint32_t squaredDistance, uint64_t delay) :
   m_hopCount (hopCount), m_expire (expireTime + Simulator::Now ()), m_lastHop (lastHop), 
-  m_iface (iface), m_ts(Simulator::Now ()), m_pathError(false), m_MRE(MRE), m_squaredDistance(squaredDistance)
+  m_iface (iface), m_ts(Simulator::Now ()), m_pathError(false), m_MRE(MRE), m_squaredDistance(squaredDistance), m_delay (delay)
 {
   m_ipv4Route = Create<Ipv4Route> ();
   m_ipv4Route->SetDestination (dst);
@@ -64,7 +65,7 @@ RoutingTableEntry::Path::Print (Ptr<OutputStreamWrapper> stream) const
   std::setiosflags (std::ios::left) << std::setprecision (2) <<
   std::setw (14) << (m_expire - Simulator::Now ()).GetSeconds ();
   *os << "\t" << m_hopCount;
-  *os << "\t" << m_MRE << "\t\t" << m_squaredDistance << "\n";
+  *os << "\t" << m_MRE << "\t\t" << m_squaredDistance << "\t\t" << m_delay << "\n";
 }
 
   /*
@@ -100,9 +101,10 @@ RoutingTableEntry::PrintPaths()
 
 struct RoutingTableEntry::Path* 
 RoutingTableEntry::PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
-                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance)
+                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                                uint32_t MRE, uint32_t squaredDistance, uint64_t delay)
 {
-  Path *p = new Path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface, MRE, squaredDistance);
+  Path *p = new Path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface, MRE, squaredDistance, delay);
   m_pathList.push_back (*p);
   m_numPaths += 1;     //TODO
   //RoutingTableEntry::Path *p = (struct RoutingTableEntry::Path*)malloc(sizeof(struct RoutingTableEntry::Path));

@@ -93,9 +93,10 @@ public:
     bool m_pathError;
     uint32_t m_MRE;
     uint32_t m_squaredDistance;
+    uint64_t m_delay;
     
     Path (Ptr<NetDevice> dev, Ipv4Address dst, Ipv4Address nextHop, uint16_t hopCount, Time expireTime, 
-          Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance);
+          Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance, uint64_t delay);
 
     Ptr<Ipv4Route> GetRoute () const { return m_ipv4Route; }
     void SetRoute (Ptr<Ipv4Route> r) { m_ipv4Route = r; }
@@ -107,6 +108,8 @@ public:
     uint32_t GetMRE () const { return m_MRE; }
     void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
     uint32_t GetSquaredDistance () const { return m_squaredDistance; }
+    void SetDelay (uint64_t delay) { m_delay = delay; }
+    uint64_t GetDelay () { return m_delay; }
     void SetOutputDevice (Ptr<NetDevice> dev) { m_ipv4Route->SetOutputDevice (dev); }
     Ptr<NetDevice> GetOutputDevice () const { return m_ipv4Route->GetOutputDevice (); }
     void SetHopCount (uint16_t hop) { m_hopCount = hop; }
@@ -124,7 +127,8 @@ public:
   /// Path functions - contribution
   void PrintPaths ();
   struct Path* PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
-                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance);
+                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                           uint32_t MRE, uint32_t squaredDistance, uint64_t delay);
   struct Path* PathLookup (Ipv4Address id);
   struct Path* PathLookupDisjoint (Ipv4Address nh, Ipv4Address lh);
   bool PathNewDisjoint (Ipv4Address nh, Ipv4Address lh);
