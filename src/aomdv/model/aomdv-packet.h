@@ -157,6 +157,8 @@ public:
   bool GetDestinationOnly () const;
   void SetUnknownSeqno (bool f);
   bool GetUnknownSeqno () const;
+  void SetRReq (bool f);
+  bool GetRReq () const;
   //\}
 
   bool operator== (RreqHeader const & o) const;

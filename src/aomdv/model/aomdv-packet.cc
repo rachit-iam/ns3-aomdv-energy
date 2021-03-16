@@ -279,6 +279,21 @@ RreqHeader::GetUnknownSeqno () const
   return (m_flags & (1 << 3));
 }
 
+void
+RreqHeader::SetRReq (bool f)
+{
+  if (f)
+    m_flags |= (1 << 2);
+  else
+    m_flags &= ~(1 << 2);
+}
+
+bool
+RreqHeader::GetRReq () const
+{
+  return (m_flags & (1 << 2));
+}
+
 bool
 RreqHeader::operator== (RreqHeader const & o) const
 {

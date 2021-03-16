@@ -37,3 +37,6 @@ also when we are getting a rerr for a dest from a src we are deleting the whole 
   )
 
 do load balanced at intermediate nodes as well if neccessary
+
+multiple rreqs ale to make multiple paths in good numbers, things remain like when to start data sending and the
+route is marked in_search and the lifetime of route is also less
