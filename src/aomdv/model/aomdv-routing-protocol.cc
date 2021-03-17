@@ -123,15 +123,15 @@ NS_OBJECT_ENSURE_REGISTERED (DeferredRouteOutputTag);
 
 //-----------------------------------------------------------------------------
 RoutingProtocol::RoutingProtocol () :
-  m_rreqRetries (2),
+  m_rreqRetries (1),
   m_ttlStart (2),
   m_ttlIncrement (2),
-  m_ttlThreshold (10),
+  m_ttlThreshold (8),
   m_timeoutBuffer (2),
   m_rreqRateLimit (10),
   m_rerrRateLimit (10),
-  m_activeRouteTimeout (Time(Seconds (5))),
-  m_netDiameter (35),
+  m_activeRouteTimeout (Time(Seconds (50))),
+  m_netDiameter (10),
   m_nodeTraversalTime (MilliSeconds (40)),
   m_netTraversalTime (Time ((2 * m_netDiameter) * m_nodeTraversalTime)),
   m_pathDiscoveryTime ( Time (2 * m_netTraversalTime)),
@@ -160,7 +160,7 @@ RoutingProtocol::RoutingProtocol () :
   m_rerrRateLimitTimer (Timer::CANCEL_ON_DESTROY),
   m_lastBcastTime (Seconds (0))
 {
-  m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
+  //m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
 }
 
 TypeId
@@ -175,7 +175,7 @@ RoutingProtocol::GetTypeId (void)
                    MakeTimeAccessor (&RoutingProtocol::m_helloInterval),
                    MakeTimeChecker ())
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",
-                   UintegerValue (2),
+                   UintegerValue (1),
                    MakeUintegerAccessor (&RoutingProtocol::m_rreqRetries),
                    MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("RreqRateLimit", "Maximum number of RREQ per second.",
@@ -196,7 +196,7 @@ RoutingProtocol::GetTypeId (void)
                    MakeTimeAccessor (&RoutingProtocol::m_nextHopWait),
                    MakeTimeChecker ())
     .AddAttribute ("ActiveRouteTimeout", "Period of time during which the route is considered to be valid",
-                   TimeValue (Seconds (3)),
+                   TimeValue (Seconds (50)),
                    MakeTimeAccessor (&RoutingProtocol::m_activeRouteTimeout),
                    MakeTimeChecker ())
     .AddAttribute ("MyRouteTimeout", "Value of lifetime field in RREP generating by this node = 2 * max(ActiveRouteTimeout, PathDiscoveryTime)",
@@ -214,7 +214,7 @@ RoutingProtocol::GetTypeId (void)
                    MakeTimeAccessor (&RoutingProtocol::m_deletePeriod),
                    MakeTimeChecker ())
     .AddAttribute ("NetDiameter", "Net diameter measures the maximum possible number of hops between two nodes in the network",
-                   UintegerValue (35),
+                   UintegerValue (10),
                    MakeUintegerAccessor (&RoutingProtocol::m_netDiameter),
                    MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("NetTraversalTime", "Estimate of the average net traversal time = 2 * NodeTraversalTime * NetDiameter",
@@ -272,7 +272,10 @@ void
 RoutingProtocol::SetMaxQueueLen (uint32_t len)
 {
   m_maxQueueLen = len;
-  m_activeRouteTimeout = Seconds(50);// i dont kno why i ve to cheange this here, but when i was changing in the original position it was not working
+  m_activeRouteTimeout = Seconds(50);// i dont kno why(as the values are set once again in this AddAttribute) i ve to cheange this here, but when i was changing in the original position it was not working
+  m_rreqRetries = 1;
+  m_netDiameter = 10;
+  m_ttlThreshold = 8;
   m_queue.SetMaxQueueLen (len);
 }
 void
@@ -1034,7 +1037,7 @@ RoutingProtocol::SendRequest (Ipv4Address dst)
   rreqHeader.SetY(pos.second);
   rreqHeader.SetSquaredDistance(0);
   rreqHeader.SetTimeStamp(Simulator::Now().GetNanoSeconds());
-  NS_LOG_UNCOND("RREQ SENT FROM ORIGIN WITH TTL = " << ttl);
+  NS_LOG_UNCOND("RREQ SENT FROM ORIGIN WITH TTL = " << ttl<< " at time = " << Simulator::Now().GetSeconds());
   //now workingNS_LOG_UNCOND((int)rreqHeader.GetHopCount() << "yo");//bug not working
   // Send RREQ as subnet directed broadcast from each interface used by aomdv
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
@@ -1092,15 +1095,7 @@ RoutingProtocol::ScheduleRreqRetry (Ipv4Address dst)
   RoutingTableEntry rt;
   m_routingTable.LookupRoute (dst, rt);
   Time retry;
-  if (rt.GetLastHopCount () < m_netDiameter)
-    {
-      retry = 2 * m_nodeTraversalTime * (rt.GetLastHopCount () + m_timeoutBuffer);
-    }
-  else
-    {
-      // Binary exponential backoff
-      retry = std::pow<uint16_t> (2, rt.GetRreqCnt () - 1) * m_netTraversalTime;
-    }
+  retry = 2 * m_nodeTraversalTime * (rt.GetLastHopCount () + m_timeoutBuffer);
   m_addressReqTimer[dst].Schedule (retry);
   NS_LOG_LOGIC ("Scheduled RREQ retry in " << retry.GetSeconds () << " seconds");
 }
@@ -1335,7 +1330,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
     {
       RoutingTableEntry newEntry (
           /*dst=*/origin, /*validSeno=*/true, /*seqNo=*/rreqHeader.GetOriginSeqno (),
-          /*timeLife=*/Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime)));
+          /*timeLife=*/Time (m_activeRouteTimeout));
       m_routingTable.AddRoute (newEntry);
       m_routingTable.LookupRoute (origin, toOrigin);
     }
@@ -1637,7 +1632,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
           rreqHeader.SetUnknownSeqno (false);
         }
     }   
-  if (killRequestPropagation)
+  if (killRequestPropagation || IsMyOwnAddress(dst))
     {
       return;
     }
@@ -1710,7 +1705,7 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry & t
   RrepHeader rrepHeader ( /*prefixSize=*/ 0, /*hops=*/ 0, /*dst=*/ rreqHeader.GetDst (),
                           /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), 
                           /*requestId=*/ rreqHeader.GetId (), /*firstHop=*/firstHop,
-                          /*lifeTime=*/ m_myRouteTimeout, /*MRE*/ INFINITY3, pos.first , pos.second, 0, Simulator::Now().GetNanoSeconds());
+                          /*lifeTime=*/ m_activeRouteTimeout, /*MRE*/ INFINITY3, pos.first , pos.second, 0, Simulator::Now().GetNanoSeconds());
   if(rreqHeader.GetRReq ()) rrepHeader.SetDstSeqno(rreqHeader.GetDstSeqno ());
   Ptr<Packet> packet = Create<Packet> ();
   SocketIpTtlTag tag;
@@ -1945,6 +1940,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
         NS_LOG_UNCOND("IS THIS THE ERROR " << rrepHeader.GetDstSeqno () << " " << toDst.GetSeqNo ());
         return;
       }
+    toDst.SetLifeTime(m_activeRouteTimeout);
     m_routingTable.Update(toDst);
 
     
@@ -2102,7 +2098,7 @@ RoutingProtocol::RecvReplyAck (Ipv4Address neighbor)
 void
 RoutingProtocol::ProcessHello (RrepHeader const & rrepHeader, Ipv4Address receiver )
 {
-  NS_LOG_FUNCTION (this << "from " << rrepHeader.GetDst ());
+  NS_LOG_UNCOND (this << "from " << rrepHeader.GetDst ());
   /*
    *  Whenever a node receives a Hello message from a neighbor, the node
    * SHOULD make sure that it has an active route to the neighbor, and
@@ -2229,6 +2225,7 @@ RoutingProtocol::RouteRequestTimerExpire (Ipv4Address dst)
         m_addressReqTimer[dst].Remove ();
         m_addressReqTimer.erase (dst);
         toDst.SetFlag(VALID);
+        m_routingTable.Update(toDst);
         SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());//the second argument holds no value now
         NS_LOG_LOGIC ("route to " << dst << " found");
         return;
@@ -2246,6 +2243,8 @@ RoutingProtocol::RouteRequestTimerExpire (Ipv4Address dst)
       if(toDst.GetNumberofPaths () >= 5) {
         m_addressReqTimer[dst].Remove ();
         m_addressReqTimer.erase (dst);
+        toDst.SetFlag(VALID);
+        m_routingTable.Update(toDst);
         SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());
         NS_LOG_LOGIC ("route to " << dst << " found");//todo has to mark the routes and something else as valid
         return;

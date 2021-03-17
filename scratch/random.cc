@@ -136,8 +136,8 @@ main (int argc, char *argv[])
   uint32_t packetSize = 1000; // bytes
   uint32_t numPackets = 350;
   uint32_t numNodes = 100; // by default, 5x5
-  uint32_t sinkNode = 4;
-  uint32_t sourceNode = 58;
+  uint32_t sinkNode = 13;
+  uint32_t sourceNode = 38;
   double interval = 0.1; // seconds
   bool verbose = false;
   bool tracing = true;

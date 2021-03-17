@@ -665,6 +665,7 @@ RoutingTable::InvalidateRoutesWithDst (const std::map<Ipv4Address, uint32_t> & u
           if ((i->first == j->first) && (i->second.GetFlag () == VALID))
             {
               NS_LOG_LOGIC ("Invalidate route with destination address " << i->first);
+              NS_LOG_UNCOND("UNREACHABLE = " << i->first);
               i->second.Invalidate (m_badLinkLifetime);
             }
         }
