@@ -121,11 +121,14 @@ void
 EnergyCheck(NodeContainer c) {
     NS_LOG_UNCOND("Time = " << Simulator::Now());
     double Emin = 1000.0;
+    double Esum = 0.0;
     for(NodeContainer::Iterator i = c.Begin() ; i < c.End() ; i++){
         double e = ((*i)->GetObject<EnergySourceContainer>()->Get(0)->GetRemainingEnergy());
         Emin = std::min(Emin, e);
+        Esum += e;
     }
-    NS_LOG_UNCOND("Minimum energy = " << Emin << "\n");
+    NS_LOG_UNCOND("Minimum energy = " << Emin);
+    NS_LOG_UNCOND("Total energy remaining " << Esum);
 }
 
 int
