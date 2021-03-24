@@ -288,7 +288,7 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
   double sum = 0.0 , midSum = 0.0;
   Ptr<UniformRandomVariable> rr = CreateObject<UniformRandomVariable> ();
   for(; i != m_pathList.end () ; i++) {
-    uint64_t metric = 0;
+    double metric = 0;
     switch (AOMDV_LOAD_BALANCING_STRATEGY) {
       case 0:
         metric = 10000.0 / i->m_squaredDistance;
