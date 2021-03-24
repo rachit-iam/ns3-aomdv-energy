@@ -42,6 +42,8 @@
 
 #define INFINITY2 0xff
 #define INFINITY3 9999999
+#define AOMDV_MAX_PATHS 5
+#define AOMDV_LOAD_BALANCING_STRATEGY 2 //0 - SQUARED DISTANCE , 1 - MRE, 2 - DELAY 
 
 namespace ns3 {
 namespace aomdv {
@@ -136,6 +138,7 @@ public:
   void PathDelete (Ipv4Address id);
   void DeletePathFromInterface (Ipv4InterfaceAddress iface);
   void PathAllDelete (void);                  // delete all paths
+  void PathDeleteLongestUnnecessary (void); 
   void PathDeleteLongest (void);          // delete longest path
   bool PathEmpty (void) const;                   // is the path list empty?
   struct Path * PathFind (void);            // find the path that we got first

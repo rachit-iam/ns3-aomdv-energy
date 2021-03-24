@@ -1355,8 +1355,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
           }
         else if (toOrigin.PathNewDisjoint (src, rreqHeader.GetFirstHop ()))
           {
-            if ((toOrigin.GetNumberofPaths () < AOMDV_MAX_PATHS) &&
-                (((rreqHeader.GetHopCount () + 1) - toOrigin.PathGetMinHopCount ()) <=
+            if ((((rreqHeader.GetHopCount () + 1) - toOrigin.PathGetMinHopCount ()) <=
                   AOMDV_PRIM_ALT_PATH_LENGTH_DIFF))
               {
                 toOrigin.SetSeqNo (rreqHeader.GetOriginSeqno ());
@@ -1419,8 +1418,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
           }
         else if (toOrigin.PathNewDisjoint (src, rreqHeader.GetFirstHop ()))
           {
-            if ((toOrigin.GetNumberofPaths () < AOMDV_MAX_PATHS) &&
-                (((rreqHeader.GetHopCount () + 1) - toOrigin.PathGetMinHopCount ()) <=
+            if ((((rreqHeader.GetHopCount () + 1) - toOrigin.PathGetMinHopCount ()) <=
                   AOMDV_PRIM_ALT_PATH_LENGTH_DIFF))
               {
                 reversePath = toOrigin.PathInsert (
@@ -1918,7 +1916,6 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
               }
           }
         else if ((toDst.PathNewDisjoint (sender ,rrepHeader.GetFirstHop ()))//change imp
-                  && (toDst.GetNumberofPaths () < AOMDV_MAX_PATHS) 
                   && (hop - toDst.PathGetMinHopCount () <= AOMDV_PRIM_ALT_PATH_LENGTH_DIFF))
           {
             /* Insert forward path to RREQ destination. */
@@ -2220,6 +2217,7 @@ RoutingProtocol::RouteRequestTimerExpire (Ipv4Address dst)
    */
   if (toDst.GetRreqCnt () == m_rreqRetries)
     {
+      toDst.PathDeleteLongestUnnecessary();
       if(toDst.GetFlag () == IN_SEARCH && toDst.GetNumberofPaths ())
       {
         m_addressReqTimer[dst].Remove ();
@@ -2240,15 +2238,15 @@ RoutingProtocol::RouteRequestTimerExpire (Ipv4Address dst)
 
   if (toDst.GetFlag () == IN_SEARCH)
     {
-      if(toDst.GetNumberofPaths () >= 5) {
-        m_addressReqTimer[dst].Remove ();
-        m_addressReqTimer.erase (dst);
-        toDst.SetFlag(VALID);
-        m_routingTable.Update(toDst);
-        SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());
-        NS_LOG_LOGIC ("route to " << dst << " found");//todo has to mark the routes and something else as valid
-        return;
-      } 
+      // if(toDst.GetNumberofPaths () >= AOMDV_MAX_PATHS) {
+      //   m_addressReqTimer[dst].Remove ();
+      //   m_addressReqTimer.erase (dst);
+      //   toDst.SetFlag(VALID);
+      //   m_routingTable.Update(toDst);
+      //   SendPacketFromQueue (dst, toDst.PathLoadBalancedFind()->GetRoute ());
+      //   NS_LOG_LOGIC ("route to " << dst << " found");//todo has to mark the routes and something else as valid
+      //   return;
+      // } 
       NS_LOG_LOGIC ("Resend RREQ to " << dst << " ttl " << m_netDiameter);
       SendRequest (dst);
     }

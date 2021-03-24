@@ -216,20 +216,40 @@ RoutingTableEntry::PathAllDelete (void)
   m_numPaths = 0;
 }
 
+void
+RoutingTableEntry::PathDeleteLongestUnnecessary (void) {
+  while(m_pathList.size() > AOMDV_MAX_PATHS) {
+    this->PathDeleteLongest();
+  }
+}
+
 void 
 RoutingTableEntry::PathDeleteLongest (void)
 {
   Path *path = NULL;
   std::vector<Path>::iterator j;
-  uint16_t maxHopCount = 0;
+  uint64_t comMetric = AOMDV_LOAD_BALANCING_STRATEGY == 1 ? 10000000000: 0, metric;
   for (std::vector<Path>::iterator i = m_pathList.begin (); i!= m_pathList.end (); ++i)
   {
-    if (i->m_hopCount > maxHopCount)
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    if ((AOMDV_LOAD_BALANCING_STRATEGY != 1 && metric > comMetric) || (AOMDV_LOAD_BALANCING_STRATEGY == 1 && metric < comMetric))
     {
       //assert (i->hopcount != INFINITY2); //TODO
       path = &(*i);
       j = i;
-      maxHopCount = i->m_hopCount;
+      comMetric = metric;
     }
   }
   if (path)
@@ -268,13 +288,41 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
   double sum = 0.0 , midSum = 0.0;
   Ptr<UniformRandomVariable> rr = CreateObject<UniformRandomVariable> ();
   for(; i != m_pathList.end () ; i++) {
-    sum += 10000.0 / i->GetSquaredDistance ();
+    uint64_t metric = 0;
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = 10000.0 / i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = 1000000000.0 / i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    sum += metric;
   }
   double z = rr->GetValue(0.0 , 1.0)*sum;
   //NS_LOG_UNCOND("Random value = " << z << " Sum = " << sum);
   i = m_pathList.begin ();
   for( ; i != m_pathList.end() ; i++) {
-    midSum += 10000.0 / i->GetSquaredDistance ();
+    double metric = 0;
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = 10000.0 / i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = 1000000000.0 / i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    midSum += metric;
     if(z <= midSum) {
       path = &(*i);
       break;
