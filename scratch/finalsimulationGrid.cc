@@ -81,7 +81,7 @@
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/mobility-model.h"
 #include "ns3/mobility-module.h"
-#include "ns3/aodv-helper.h"
+#include "ns3/aomdv-helper.h"
 #include "ns3/ipv4-static-routing-helper.h"
 #include "ns3/ipv4-list-routing-helper.h"
 #include "ns3/internet-stack-helper.h"
@@ -190,11 +190,11 @@ main (int argc, char *argv[])
   // sourceNode and sinkNode are set after the commandline arguments are set
   uint32_t sourceNode=0;
   uint32_t sinkNode =numNodes-1;
-  uint32_t minInitialEnergy = 20;
-  uint32_t maxInitialEnergy = 200;  
+  uint32_t minInitialEnergy = 200;
+  uint32_t maxInitialEnergy = 300;  
   double interval = 0.1; // seconds
   bool verbose = false;
-  bool tracing = false;
+  bool tracing = true;
 
   CommandLine cmd;
   cmd.AddValue ("phyMode", "Wifi Phy mode", phyMode);
@@ -238,7 +238,7 @@ main (int argc, char *argv[])
 
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   // set it to zero; otherwise, gain will be added
-  wifiPhy.Set ("RxGain", DoubleValue (-15));
+  wifiPhy.Set ("RxGain", DoubleValue (-40));
   // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
   wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
 
@@ -268,7 +268,7 @@ main (int argc, char *argv[])
    mobility.Install (c);
 
   // Enable OLSR
-  AodvHelper aodv;
+  AomdvHelper aomdv;
   Ipv4StaticRoutingHelper staticRouting;
 
   /** Energy Model **/
@@ -300,7 +300,7 @@ main (int argc, char *argv[])
   }
 
   Ipv4ListRoutingHelper list;
-  list.Add (aodv, 10);
+  list.Add (aomdv, 10);
 
   InternetStackHelper internet;
   internet.SetRoutingHelper (list); // has effect on the next Install ()
@@ -329,10 +329,10 @@ main (int argc, char *argv[])
       // Trace routing tables
       Ptr<OutputStreamWrapper> routingStream =
           Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.routes", std::ios::out);
-      aodv.PrintRoutingTableAllEvery (Seconds (1), routingStream);
+      aomdv.PrintRoutingTableAllEvery (Seconds (1), routingStream);
       Ptr<OutputStreamWrapper> neighborStream =
           Create<OutputStreamWrapper> ("wifi-simple-adhoc-grid.neighbors", std::ios::out);
-      aodv.PrintNeighborCacheAllEvery (Seconds (1), neighborStream);
+      aomdv.PrintNeighborCacheAllEvery (Seconds (1), neighborStream);
 
       // To do-- enable an IP-level trace that shows forwarding events only
     }
