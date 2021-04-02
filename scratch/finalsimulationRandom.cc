@@ -190,8 +190,6 @@ main (int argc, char *argv[])
   // sourceNode and sinkNode are set after the commandline arguments are set
   uint32_t sourceNode=0;
   uint32_t sinkNode =numNodes-1;
-  uint32_t minInitialEnergy = 20;
-  uint32_t maxInitialEnergy = 200;  
   double interval = 0.1; // seconds
   bool verbose = false;
   bool tracing = false;
@@ -272,6 +270,9 @@ main (int argc, char *argv[])
   /* energy source */
   // Setting different initial energy
   
+  
+  uint32_t minInitialEnergy = numPackets/10;
+  uint32_t maxInitialEnergy = numPackets/2;  
   BasicEnergySourceHelper basicSourceHelper;
   std::map <Ptr<Node>, int> NodeInitialEnergyMap ; 
   for(NetDeviceContainer :: Iterator it = devices.Begin(); it!=devices.End(); it++){
@@ -333,22 +334,20 @@ main (int argc, char *argv[])
       // To do-- enable an IP-level trace that shows forwarding events only
     }
 
-  // Give OLSR time to converge-- 30 seconds perhaps
+  double stopTime = (double)numPackets/5.0;
   Simulator::Schedule (Seconds (5.0), &GenerateTraffic, source, packetSize, numPackets,
                        interPacketInterval);
-  Simulator::Schedule(Seconds(150.0), &EnergyCheck, c);
+  Simulator::Schedule(Seconds(stopTime-20), &EnergyCheck, c);
   //Simulator::Schedule(Seconds (5.0) , &EnergyCheck, c);
   // Output what we are doing
-  NS_LOG_UNCOND ("Testing from node " << sourceNode << " to " << sinkNode << " with grid distance "
-                                      << distance);
-  
   AnimationInterface anim ("animation.xml");
-  Simulator::Stop (Seconds (200.0));
+  Simulator::Stop (Seconds (stopTime));
   Simulator::Run ();
   Simulator::Destroy ();
   NS_LOG_UNCOND("\n\n\nSimulation Report");
   NS_LOG_UNCOND("Seed = "<<seed);
   NS_LOG_UNCOND("Source = " << sourceNode <<"\nSink = "<<sinkNode);
+  NS_LOG_UNCOND("NumPackets = "<<numPackets);
   NS_LOG_UNCOND("Packet Loss = "<< numPackets-packetsReceived);
   NS_LOG_UNCOND("Total delay =  "<< delay/1000000 <<"ms ");
   NS_LOG_UNCOND("Average Delay = "<< ((double)delay/(double)packetsReceived)/(double)1000000.0 <<"ms");
@@ -358,10 +357,11 @@ main (int argc, char *argv[])
   NS_LOG_UNCOND("Energy Consumption = "<< totalInitialEnergy-remainingEnergy);
   
   std::fstream fout;
-  fout.open("outputSimulation.csv", std::ios::out | std::ios::app);
+  fout.open("outputSimulationRandom.csv", std::ios::out | std::ios::app);
   
   fout << sourceNode << ", "
        << sinkNode << ", "
+       << numPackets << ", "
        << numPackets-packetsReceived << ", "
        << delay/1000000 << ", "
        << ((double)delay/(double)packetsReceived)/(double)1000000.0 << ", "
