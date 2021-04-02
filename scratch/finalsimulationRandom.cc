@@ -236,7 +236,7 @@ main (int argc, char *argv[])
 
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   // set it to zero; otherwise, gain will be added
-  wifiPhy.Set ("RxGain", DoubleValue (-35));
+  wifiPhy.Set ("RxGain", DoubleValue (-41));
   // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
   wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
 
