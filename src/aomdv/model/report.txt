@@ -1,0 +1,1 @@
+For transmission between only to points node disjoint was efficient than link disjoint 

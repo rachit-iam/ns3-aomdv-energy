@@ -37,9 +37,13 @@
 #include "ns3/timer.h"
 #include "ns3/net-device.h"
 #include "ns3/output-stream-wrapper.h"
+#include "ns3/random-variable-stream.h"
 #include <vector>
 
 #define INFINITY2 0xff
+#define INFINITY3 9999999
+#define AOMDV_MAX_PATHS 5
+#define AOMDV_LOAD_BALANCING_STRATEGY 2 //0 - SQUARED DISTANCE , 1 - MRE, 2 - DELAY 
 
 namespace ns3 {
 namespace aomdv {
@@ -87,11 +91,14 @@ public:
     /// Output interface address
     Ipv4InterfaceAddress m_iface;
     Time m_ts;         // time when we saw this nexthop
-    // CHANGE
+    // CHANG
     bool m_pathError;
-
+    uint32_t m_MRE;
+    uint32_t m_squaredDistance;
+    uint64_t m_delay;
+    
     Path (Ptr<NetDevice> dev, Ipv4Address dst, Ipv4Address nextHop, uint16_t hopCount, Time expireTime, 
-          Ipv4Address lastHop, Ipv4InterfaceAddress iface);
+          Ipv4Address lastHop, Ipv4InterfaceAddress iface, uint32_t MRE, uint32_t squaredDistance, uint64_t delay);
 
     Ptr<Ipv4Route> GetRoute () const { return m_ipv4Route; }
     void SetRoute (Ptr<Ipv4Route> r) { m_ipv4Route = r; }
@@ -99,6 +106,12 @@ public:
     Ipv4Address GetNextHop () const { return m_ipv4Route->GetGateway (); }
     void SetLastHop (Ipv4Address lastHop) { m_lastHop = lastHop; }
     Ipv4Address GetLastHop () const { return m_lastHop; }
+    void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+    uint32_t GetMRE () const { return m_MRE; }
+    void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
+    uint32_t GetSquaredDistance () const { return m_squaredDistance; }
+    void SetDelay (uint64_t delay) { m_delay = delay; }
+    uint64_t GetDelay () { return m_delay; }
     void SetOutputDevice (Ptr<NetDevice> dev) { m_ipv4Route->SetOutputDevice (dev); }
     Ptr<NetDevice> GetOutputDevice () const { return m_ipv4Route->GetOutputDevice (); }
     void SetHopCount (uint16_t hop) { m_hopCount = hop; }
@@ -116,7 +129,8 @@ public:
   /// Path functions - contribution
   void PrintPaths ();
   struct Path* PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
-                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface);
+                           Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                           uint32_t MRE, uint32_t squaredDistance, uint64_t delay);
   struct Path* PathLookup (Ipv4Address id);
   struct Path* PathLookupDisjoint (Ipv4Address nh, Ipv4Address lh);
   bool PathNewDisjoint (Ipv4Address nh, Ipv4Address lh);
@@ -124,6 +138,7 @@ public:
   void PathDelete (Ipv4Address id);
   void DeletePathFromInterface (Ipv4InterfaceAddress iface);
   void PathAllDelete (void);                  // delete all paths
+  void PathDeleteLongestUnnecessary (void); 
   void PathDeleteLongest (void);          // delete longest path
   bool PathEmpty (void) const;                   // is the path list empty?
   struct Path * PathFind (void);            // find the path that we got first

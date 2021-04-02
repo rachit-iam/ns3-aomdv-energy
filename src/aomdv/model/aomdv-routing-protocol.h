@@ -50,7 +50,7 @@
 #define LOCAL_REPAIR_WAIT_TIME  0.15 //sec
 //#define INFINITY 0xff
 #define AOMDV_MAX_PATHS 5
-#define AOMDV_PRIM_ALT_PATH_LENGTH_DIFF 3
+#define AOMDV_PRIM_ALT_PATH_LENGTH_DIFF 5 // changed for having more routes
 
 namespace ns3
 {
@@ -214,6 +214,10 @@ private:
   void UpdateRouteToNeighbor (Ipv4Address sender, Ipv4Address receiver);
   /// Check that packet is send from own interface
   bool IsMyOwnAddress (Ipv4Address src);
+  /// GET remaining energy
+  uint32_t GetRemainingEnergy(void) ;
+  ///Get node position
+  std::pair<uint32_t, uint32_t> GetPosition(void) ; 
   /// Find unicast socket with local interface address iface
   Ptr<Socket> FindSocketWithInterfaceAddress (Ipv4InterfaceAddress iface) const;
   /// Find subnet directed broadcast socket with local interface address iface

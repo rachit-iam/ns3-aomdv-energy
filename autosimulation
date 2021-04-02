@@ -1,0 +1,17 @@
+#!/bin/bash
+i=0
+j=0
+loop=3
+sourceNodeList=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
+sinkNodeList=(10 5 6 7 12 2 24 22 20 4 6 13 7 11 19 21 20 0 1 2 23 15 6 7 16)
+lenlist=${#sourceNodeList[@]}
+numPackets=(1000 2000 5000 10000)
+lenSize=${#numPackets[@]}
+
+for ((j=0; j<$lenSize;j++))
+do	
+	for ((i=0; i<1;i++))
+	do
+		`./waf --run "scratch/finalsimulationRandom --sourceNode=${sourceNodeList[i]} --sinkNode=${sinkNodeList[i]} --numPackets=${numPackets[j]}"`
+	done
+done

@@ -41,9 +41,10 @@ namespace aomdv
 {
 
 RoutingTableEntry::Path::Path (Ptr<NetDevice> dev, Ipv4Address dst, Ipv4Address nextHop, uint16_t hopCount, 
-                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface) :
+                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                                uint32_t MRE, uint32_t squaredDistance, uint64_t delay) :
   m_hopCount (hopCount), m_expire (expireTime + Simulator::Now ()), m_lastHop (lastHop), 
-  m_iface (iface), m_ts(Simulator::Now ()), m_pathError(false)
+  m_iface (iface), m_ts(Simulator::Now ()), m_pathError(false), m_MRE(MRE), m_squaredDistance(squaredDistance), m_delay (delay)
 {
   m_ipv4Route = Create<Ipv4Route> ();
   m_ipv4Route->SetDestination (dst);
@@ -63,7 +64,8 @@ RoutingTableEntry::Path::Print (Ptr<OutputStreamWrapper> stream) const
   *os << std::setiosflags (std::ios::fixed) << 
   std::setiosflags (std::ios::left) << std::setprecision (2) <<
   std::setw (14) << (m_expire - Simulator::Now ()).GetSeconds ();
-  *os << "\t" << m_hopCount << "\n";
+  *os << "\t" << m_hopCount;
+  *os << "\t" << m_MRE << "\t\t" << m_squaredDistance << "\t\t" << m_delay << "\n";
 }
 
   /*
@@ -99,13 +101,13 @@ RoutingTableEntry::PrintPaths()
 
 struct RoutingTableEntry::Path* 
 RoutingTableEntry::PathInsert (Ptr<NetDevice> dev, Ipv4Address nextHop, uint16_t hopCount, 
-                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface)
+                               Time expireTime, Ipv4Address lastHop, Ipv4InterfaceAddress iface,
+                                uint32_t MRE, uint32_t squaredDistance, uint64_t delay)
 {
-  Path path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface);
-  m_pathList.push_back (path);
+  Path *p = new Path(dev, m_dst, nextHop, hopCount, expireTime, lastHop, iface, MRE, squaredDistance, delay);
+  m_pathList.push_back (*p);
   m_numPaths += 1;     //TODO
   //RoutingTableEntry::Path *p = (struct RoutingTableEntry::Path*)malloc(sizeof(struct RoutingTableEntry::Path));
-  Path *p = &path;
   return p;
 }
 
@@ -214,20 +216,40 @@ RoutingTableEntry::PathAllDelete (void)
   m_numPaths = 0;
 }
 
+void
+RoutingTableEntry::PathDeleteLongestUnnecessary (void) {
+  while(m_pathList.size() > AOMDV_MAX_PATHS) {
+    this->PathDeleteLongest();
+  }
+}
+
 void 
 RoutingTableEntry::PathDeleteLongest (void)
 {
   Path *path = NULL;
   std::vector<Path>::iterator j;
-  uint16_t maxHopCount = 0;
+  uint64_t comMetric = AOMDV_LOAD_BALANCING_STRATEGY == 1 ? 10000000000: 0, metric;
   for (std::vector<Path>::iterator i = m_pathList.begin (); i!= m_pathList.end (); ++i)
   {
-    if (i->m_hopCount > maxHopCount)
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    if ((AOMDV_LOAD_BALANCING_STRATEGY != 1 && metric > comMetric) || (AOMDV_LOAD_BALANCING_STRATEGY == 1 && metric < comMetric))
     {
       //assert (i->hopcount != INFINITY2); //TODO
       path = &(*i);
       j = i;
-      maxHopCount = i->m_hopCount;
+      comMetric = metric;
     }
   }
   if (path)
@@ -259,7 +281,59 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
   Path *path = NULL;
   //NS_LOG_UNCOND("PATH FIND CHECK" << m_pathList.size());
   std::vector<Path>::iterator i = m_pathList.begin ();
-  path = &(*i);
+  if(m_pathList.size() < 2) {
+    path = &(*i);
+    return path;
+  }
+  double sum = 0.0 , midSum = 0.0;
+  Ptr<UniformRandomVariable> rr = CreateObject<UniformRandomVariable> ();
+  for(; i != m_pathList.end () ; i++) {
+    double metric = 0;
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = 10000.0 / i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = 1000000000.0 / i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    sum += metric;
+  }
+  double z = rr->GetValue(0.0 , 1.0)*sum;
+  //NS_LOG_UNCOND("Random value = " << z << " Sum = " << sum);
+  i = m_pathList.begin ();
+  for( ; i != m_pathList.end() ; i++) {
+    double metric = 0;
+    switch (AOMDV_LOAD_BALANCING_STRATEGY) {
+      case 0:
+        metric = 10000.0 / i->m_squaredDistance;
+        break;
+      case 1:
+        metric = i->m_MRE;
+        break;
+      case 2:
+        metric = 1000000000.0 / i->m_delay;
+        break;
+      default:
+        NS_LOG_UNCOND("LOAD BALANCING STRATEGY NOT SET CORRECTLY");
+    }
+    midSum += metric;
+    if(z <= midSum) {
+      path = &(*i);
+      break;
+    }
+    //NS_LOG_UNCOND("Midsum = " << midSum);
+  }
+  if(path == NULL) {
+    i = m_pathList.begin ();
+    path = &(*i);
+  }
+  NS_LOG_UNCOND("Next hop is " << path->GetNextHop ());
   return path;
 }
 
@@ -428,8 +502,9 @@ RoutingTableEntry::GetPrecursors (std::vector<Ipv4Address> & prec) const
           if (*j == *i)
             result = false;
         }
-      if (result)
+      if (result){
         prec.push_back (*i);
+      }
     }
 }
 
@@ -488,6 +563,7 @@ RoutingTableEntry::Print (Ptr<OutputStreamWrapper> stream) const
         break;
       }
     }
+  *os << "  " << (m_lifeTime - Simulator::Now()).GetSeconds();
    for (std::vector<Path>::const_iterator i = m_pathList.begin (); i!= m_pathList.end (); ++i)
      {
        i->Print (stream);
@@ -637,6 +713,7 @@ RoutingTable::InvalidateRoutesWithDst (const std::map<Ipv4Address, uint32_t> & u
           if ((i->first == j->first) && (i->second.GetFlag () == VALID))
             {
               NS_LOG_LOGIC ("Invalidate route with destination address " << i->first);
+              NS_LOG_UNCOND("UNREACHABLE = " << i->first);
               i->second.Invalidate (m_badLinkLifetime);
             }
         }
@@ -761,7 +838,7 @@ RoutingTable::Print (Ptr<OutputStreamWrapper> stream) const
   std::map<Ipv4Address, RoutingTableEntry> table = m_ipv4AddressEntry;
   Purge (table);
   *stream->GetStream () << "\nAOMDV Routing table\n"
-                        << "Destination\tFlag\tGateway\t\tInterface\tExpire\t\tHops\n";
+                        << "Destination\tFlag\tGateway\t\tInterface\tExpire\t\tHops\tR Energy\tSquared Distance\n";
   for (std::map<Ipv4Address, RoutingTableEntry>::const_iterator i =
          table.begin (); i != table.end (); ++i)
     {

@@ -1,0 +1,42 @@
+some routes for origin are automatically deleted at time 28 when sending 50 packets at interval of 1.00s
+
+after path expiration path is not deleted // FOR NOW NOT NEEDED ROUTE IS DELETED SO IT IS FINE IF PATH IS NOT DELETED
+
+multiuple paths still not forming in many cases
+
+Route lifetime functions is working fine but path->SetExpire function is not working neither Updatepathtime but actually 
+we dont need that as we have to work on the latest energy and every path nees to be updated after some time
+
+actually path expiratin work if we do the routeUpdate after that
+
+after route expiry from valid , route doesnt get deleted but goed to down/invalid with a time period of 15s.
+
+may have to increase route expiration time as when interval is set to 1s and we have 5 paths then it takes 5s but route expiration time max can be 4.2 s smthng
+
+//a good rerr checking case can be wifi-energy-longRange with interval = 1s as RERR is produced but packet is not received afte that
+
+in aomdv if rrep is received then the rrep is sent to the maximum hop available path for more paths
+
+the problem im facing is called route cutoff problem
+
+also load balancing faces interference problem
+
+what we are doing here is even though when dest recieves rreq and it doesnt form a path due to disjointedness we are
+sending a rrep along the sender neighbor, so what we can do is if we recieve a rreq at dest for which the first hop is
+same and thus we cant form a path then we send the rrep to that sender neighbor and in the rrep record a field called first-hop
+so when any intermediate node receives this rrep it knows that it cannot send its data through a path which has first-hop as 
+the recorded value in rrep.
+
+insertprecursor is not used in recvreply and thus most of the times it is empty
+
+also when we are getting a rerr for a dest from a src we are deleting the whole route instead of a path (random -   uint32_t numPackets = 350;
+  uint32_t numNodes = 100; // by default, 5x5
+  uint32_t sinkNode = 32;
+  uint32_t sourceNode = 2;
+  double interval = 0.1; // seconds
+  )
+
+do load balanced at intermediate nodes as well if neccessary
+
+multiple rreqs ale to make multiple paths in good numbers, things remain like when to start data sending and the
+route is marked in_search and the lifetime of route is also less

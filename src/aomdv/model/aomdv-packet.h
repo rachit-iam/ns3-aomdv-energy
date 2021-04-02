@@ -35,6 +35,8 @@
 #include <map>
 #include "ns3/nstime.h"
 
+#define INFINITY3 9999999
+
 namespace ns3 {
 namespace aomdv {
 
@@ -106,7 +108,8 @@ public:
   RreqHeader (uint8_t flags = 0, uint8_t reserved = 0, uint8_t hopCount = 0,
               uint32_t requestID = 0, Ipv4Address dst = Ipv4Address (),
               uint32_t dstSeqNo = 0, Ipv4Address origin = Ipv4Address (),
-              uint32_t originSeqNo = 0, Ipv4Address firstHop = Ipv4Address());
+              uint32_t originSeqNo = 0, Ipv4Address firstHop = Ipv4Address(), uint32_t MRE = INFINITY3,
+              uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0, uint64_t timeStamp = 0);
 
   ///\name Header serialization/deserialization
   //\{
@@ -134,6 +137,16 @@ public:
   uint32_t GetOriginSeqno () const { return m_originSeqNo; }
   void SetFirstHop (Ipv4Address a) { m_firstHop = a; }
   Ipv4Address GetFirstHop () const { return m_firstHop; }
+  void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+  uint32_t GetMRE () const { return m_MRE; }
+  void SetX (uint32_t x) { m_x = x; }
+  uint32_t GetX () { return m_x; }
+  void SetY (uint32_t y) { m_y = y; }
+  uint32_t GetY () { return m_y; }
+  void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
+  uint32_t GetSquaredDistance () { return m_squaredDistance; }
+  void SetTimeStamp (uint64_t timeStamp) { m_timeStamp = timeStamp; }
+  uint64_t GetTimeStamp () { return m_timeStamp; }
   //\}
 
   ///\name Flags
@@ -144,6 +157,8 @@ public:
   bool GetDestinationOnly () const;
   void SetUnknownSeqno (bool f);
   bool GetUnknownSeqno () const;
+  void SetRReq (bool f);
+  bool GetRReq () const;
   //\}
 
   bool operator== (RreqHeader const & o) const;
@@ -157,6 +172,11 @@ private:
   Ipv4Address    m_origin;         ///< Originator IP Address
   uint32_t       m_originSeqNo;    ///< Source Sequence Number
   Ipv4Address    m_firstHop;
+  uint32_t       m_MRE;
+  uint32_t       m_x;
+  uint32_t       m_y;
+  uint32_t       m_squaredDistance;
+  uint64_t       m_timeStamp;
 };
 
 std::ostream & operator<< (std::ostream & os, RreqHeader const &);
@@ -187,7 +207,9 @@ public:
   RrepHeader (uint8_t prefixSize = 0, uint8_t hopCount = 0, Ipv4Address dst =
                 Ipv4Address (), uint32_t dstSeqNo = 0, Ipv4Address origin =
                 Ipv4Address (), uint32_t requestID = 0,  Ipv4Address firstHop =
-                Ipv4Address (), Time lifetime = MilliSeconds (0));
+                Ipv4Address (), Time lifetime = MilliSeconds (0), uint32_t MRE = INFINITY3,
+                uint32_t x = 0, uint32_t y = 0, uint32_t squaredDistance = 0, uint64_t timeStamp = 0);
+
   ///\name Header serialization/deserialization
   //\{
   static TypeId GetTypeId ();
@@ -214,6 +236,16 @@ public:
   Ipv4Address GetFirstHop () const { return m_firstHop; }
   void SetLifeTime (Time t);
   Time GetLifeTime () const;
+  void SetMRE (uint32_t MRE) { m_MRE = MRE; }
+  uint32_t GetMRE () const { return m_MRE; }
+  void SetX (uint32_t x) { m_x = x; }
+  uint32_t GetX () { return m_x; }
+  void SetY (uint32_t y) { m_y = y; }
+  uint32_t GetY () { return m_y; }
+  void SetSquaredDistance (uint32_t squaredDistance) { m_squaredDistance = squaredDistance; }
+  uint32_t GetSquaredDistance () { return m_squaredDistance; }
+  void SetTimeStamp (uint64_t timeStamp) { m_timeStamp = timeStamp; }
+  uint64_t GetTimeStamp () { return m_timeStamp; }
   //\}
 
   ///\name Flags
@@ -238,6 +270,11 @@ private:
   uint32_t      m_requestID;
   Ipv4Address   m_firstHop;
   uint32_t      m_lifeTime;         ///< Lifetime (in milliseconds)
+  uint32_t      m_MRE;
+  uint32_t      m_x;
+  uint32_t      m_y;
+  uint32_t      m_squaredDistance;
+  uint64_t      m_timeStamp;
 };
 
 std::ostream & operator<< (std::ostream & os, RrepHeader const &);
