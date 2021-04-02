@@ -260,7 +260,7 @@ main (int argc, char *argv[])
                                   "MinY", DoubleValue (0.0),
                                   "DeltaX", DoubleValue (distance),
                                   "DeltaY", DoubleValue (distance),
-                                  "GridWidth", UintegerValue (8),
+                                  "GridWidth", UintegerValue (5),
                                   "LayoutType", StringValue ("RowFirst"));
    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
    mobility.Install (c);
