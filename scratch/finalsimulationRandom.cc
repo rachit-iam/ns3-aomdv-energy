@@ -271,7 +271,7 @@ main (int argc, char *argv[])
   // Setting different initial energy
   
   
-  uint32_t minInitialEnergy = numPackets/10;
+  uint32_t minInitialEnergy = numPackets/5;
   uint32_t maxInitialEnergy = numPackets/2;  
   BasicEnergySourceHelper basicSourceHelper;
   std::map <Ptr<Node>, int> NodeInitialEnergyMap ; 
