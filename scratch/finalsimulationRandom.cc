@@ -101,7 +101,7 @@ int64_t delay;
 double xx;
 double throughput ;
 double remainingEnergy =0.0;
-uint32_t numPackets = 1000;
+uint32_t numPackets = 2000;
 uint32_t seed = 0; 
 double Emin =1000.0;
 
@@ -271,8 +271,8 @@ main (int argc, char *argv[])
   // Setting different initial energy
   
   
-  uint32_t minInitialEnergy = numPackets/5;
-  uint32_t maxInitialEnergy = numPackets/2;  
+  uint32_t minInitialEnergy = 300;
+  uint32_t maxInitialEnergy = 500;  
   BasicEnergySourceHelper basicSourceHelper;
   std::map <Ptr<Node>, int> NodeInitialEnergyMap ; 
   for(NetDeviceContainer :: Iterator it = devices.Begin(); it!=devices.End(); it++){
@@ -334,7 +334,7 @@ main (int argc, char *argv[])
       // To do-- enable an IP-level trace that shows forwarding events only
     }
 
-  double stopTime = (double)numPackets/5.0;
+  double stopTime = 250.0;
   Simulator::Schedule (Seconds (5.0), &GenerateTraffic, source, packetSize, numPackets,
                        interPacketInterval);
   Simulator::Schedule(Seconds(stopTime-20), &EnergyCheck, c);

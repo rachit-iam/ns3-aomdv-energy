@@ -333,7 +333,7 @@ RoutingTableEntry::PathLoadBalancedFind (void) //todo if more than one path then
     i = m_pathList.begin ();
     path = &(*i);
   }
-  NS_LOG_UNCOND("Next hop is " << path->GetNextHop ());
+  //NS_LOG_UNCOND("Next hop is " << path->GetNextHop ());
   return path;
 }
 
@@ -713,7 +713,7 @@ RoutingTable::InvalidateRoutesWithDst (const std::map<Ipv4Address, uint32_t> & u
           if ((i->first == j->first) && (i->second.GetFlag () == VALID))
             {
               NS_LOG_LOGIC ("Invalidate route with destination address " << i->first);
-              NS_LOG_UNCOND("UNREACHABLE = " << i->first);
+              //NS_LOG_UNCOND("UNREACHABLE = " << i->first);
               i->second.Invalidate (m_badLinkLifetime);
             }
         }
