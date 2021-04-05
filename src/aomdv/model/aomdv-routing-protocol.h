@@ -49,7 +49,7 @@
 #define NODE_TRAVERSAL_TIME     0.03             // 30 ms
 #define LOCAL_REPAIR_WAIT_TIME  0.15 //sec
 //#define INFINITY 0xff
-#define AOMDV_MAX_PATHS 5
+//#define AOMDV_MAX_PATHS 2
 #define AOMDV_PRIM_ALT_PATH_LENGTH_DIFF 5 // changed for having more routes
 
 namespace ns3

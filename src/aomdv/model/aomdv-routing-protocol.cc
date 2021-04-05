@@ -1222,6 +1222,7 @@ RoutingProtocol::UpdateRouteToNeighbor (Ipv4Address sender, Ipv4Address receiver
     }
   else
     {
+      if(toNeighbor.GetFlag () == IN_SEARCH) return;
       Ptr<NetDevice> dev = m_ipv4->GetNetDevice (m_ipv4->GetInterfaceForAddress (receiver));
       std::vector<RoutingTableEntry::Path> paths;
       bool validPath = false;
